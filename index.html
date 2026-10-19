@@ -807,7 +807,7 @@ async function viewJoin(pin) {
     try {
       be = be || await getBackend('player');
       const g = await be.get('games/' + p + '/state');
-      if (!g) { err('找不到這個 PIN，請再確認一次'); return; }
+      if (!g) { err(CFG ? '找不到這個 PIN，請再確認一次' : '找不到這個 PIN。試玩模式只能在開房間的那台電腦上加入；要讓手機加入，請先設定 Firebase。'); return; }
       if (g.phase === 'end') { err('這場活動已經結束了'); return; }
       if (await be.get('games/' + p + '/kicked/' + be.uid)) { err('你已被講師移出這場活動'); return; }
       if (await be.get('games/' + p + '/players/' + be.uid)) { location.hash = '#/play/' + p; return; }
