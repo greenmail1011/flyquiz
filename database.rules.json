@@ -1,0 +1,59 @@
+{
+  "rules": {
+    "games": {
+      "$pin": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('hostUid').val() === auth.uid) || data.child('hostUid').val() === auth.uid)",
+
+        "players": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('games/' + $pin + '/hostUid').exists() && !root.child('games/' + $pin + '/kicked/' + $uid).exists()",
+            ".validate": "newData.hasChildren(['name'])",
+            "name": { ".validate": "newData.isString() && newData.val().length >= 1 && newData.val().length <= 16" },
+            "at": { ".validate": "newData.val() === now" },
+            "$other": { ".validate": false }
+          }
+        },
+
+        "answers": {
+          "$qid": {
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('games/' + $pin + '/state/phase').val() === 'question' && root.child('games/' + $pin + '/state/qid').val() === $qid && root.child('games/' + $pin + '/players/' + $uid).exists()",
+              ".validate": "newData.hasChildren(['v', 'at']) && newData.child('at').val() === now",
+              "v": { ".validate": "!newData.isString() || newData.val().length <= 40" },
+              "at": { ".validate": true },
+              "$other": { ".validate": false }
+            }
+          }
+        },
+
+        "remotes": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && newData.val() === root.child('secrets/' + $pin + '/remoteToken').val()"
+          }
+        },
+
+        "commands": {
+          "$cid": {
+            ".write": "auth != null && !data.exists() && root.child('games/' + $pin + '/remotes/' + auth.uid).exists()",
+            ".validate": "newData.hasChildren(['c']) && newData.child('c').isString() && newData.child('c').val().length <= 12"
+          }
+        }
+      }
+    },
+
+    "quizzes": {
+      "$quizId": {
+        ".read": "auth != null",
+        ".write": "auth != null && ((!data.exists() && newData.child('owner').val() === auth.uid) || data.child('owner').val() === auth.uid)"
+      }
+    },
+
+    "secrets": {
+      "$pin": {
+        ".read": "auth != null && (root.child('games/' + $pin + '/hostUid').val() === auth.uid || root.child('games/' + $pin + '/remotes/' + auth.uid).exists())",
+        ".write": "auth != null && root.child('games/' + $pin + '/hostUid').val() === auth.uid"
+      }
+    }
+  }
+}

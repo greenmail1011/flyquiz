@@ -1,0 +1,1551 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<title>飛答 FlyQuiz</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23121c38'/%3E%3Cpath d='M14 40 L32 14 L50 40 L32 32 Z' fill='%23ff6b35'/%3E%3Ccircle cx='32' cy='47' r='5' fill='%23fff'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#f4f1ea; --ink:#16213a; --muted:#6b7189; --line:#e3ded3; --card:#ffffff; --soft:#ece7dc;
+  --stage:#111a35; --stage2:#1b2850; --accent:#ff6b35; --accent2:#ff8a5c; --good:#22a867; --bad:#e5484d;
+  --a:#e4572e; --b:#1a9a85; --c:#e09b00; --d:#6a4cc2; --e:#d6457f; --f:#2f7fd8;
+  --font:"Noto Sans TC","PingFang TC","Microsoft JhengHei","Heiti TC",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"Cascadia Code",Consolas,"SF Mono",Menlo,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--font);-webkit-font-smoothing:antialiased;line-height:1.5}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+a{color:inherit}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+pre.code{font-family:var(--mono);background:#0d1430;color:#e9edff;border-radius:.6em;padding:.7em 1em;margin:.5em 0;text-align:left;white-space:pre;overflow:auto;font-size:.82em;line-height:1.45}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;border:1.5px solid var(--line);background:var(--card);border-radius:.7em;padding:.55em 1em;font-weight:600;text-decoration:none;transition:transform .08s,background .15s}
+.btn:hover{background:#faf8f3}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent2)}
+.btn.dark{background:var(--ink);border-color:var(--ink);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.danger{color:var(--bad)}
+.btn.sm{padding:.35em .7em;font-size:.9em}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+input.in,select.in,textarea.in{width:100%;border:1.5px solid var(--line);border-radius:.6em;padding:.55em .75em;background:#fff;outline:none}
+input.in:focus,select.in:focus,textarea.in:focus{border-color:var(--accent)}
+textarea.in{resize:vertical}
+.oa{--oc:var(--a)}.ob{--oc:var(--b)}.oc{--oc:var(--c)}.od{--oc:var(--d)}.oe{--oc:var(--e)}.of{--oc:var(--f)}
+.demo-badge{display:inline-block;background:#fff4d6;color:#7a5600;border:1px solid #f0d58a;border-radius:99px;padding:.2em .8em;font-size:.82rem}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+#toast div{background:var(--ink);color:#fff;padding:.6em 1.1em;border-radius:.7em;box-shadow:0 8px 24px rgba(0,0,0,.2);animation:pop .2s ease-out;font-size:.95rem;max-width:90vw}
+@keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
+#net{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:98;background:var(--bad);color:#fff;border-radius:99px;padding:.25em .9em;font-size:.85rem}
+.modal-back{position:fixed;inset:0;background:rgba(10,15,35,.55);z-index:90;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;color:var(--ink);border-radius:1rem;max-width:640px;width:100%;max-height:92vh;overflow:auto;padding:1.4rem 1.5rem;box-shadow:0 20px 60px rgba(0,0,0,.3);font-size:1rem}
+.modal h3{margin:0 0 .6rem;font-size:1.25rem}
+.modal .mfoot{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1rem;flex-wrap:wrap}
+.center-msg{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:.6rem}
+
+/* ---------- 加入頁 ---------- */
+.join{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px;gap:18px;background:
+  radial-gradient(1200px 600px at 10% -10%,#ffe1d3 0,transparent 60%),radial-gradient(900px 500px at 110% 110%,#d9e6ff 0,transparent 60%),var(--bg)}
+.brand{text-align:center}
+.logo{font-weight:900;font-size:3rem;letter-spacing:.08em;line-height:1;color:var(--ink)}
+.logo b{color:var(--accent)}
+.tag{color:var(--muted);margin-top:.35rem}
+.jcard{background:#fff;border-radius:1.2rem;box-shadow:0 10px 40px rgba(22,33,58,.12);padding:1.4rem;width:100%;max-width:360px;display:flex;flex-direction:column;gap:.75rem}
+.jcard .big{font-size:1.6rem;text-align:center;letter-spacing:.25em;font-weight:800;padding:.5em}
+.jcard .name{font-size:1.25rem;text-align:center;font-weight:700}
+.jcard .btn{font-size:1.15rem;padding:.7em}
+.jerr{color:var(--bad);text-align:center;min-height:1.2em;font-size:.95rem}
+.hostlink{color:var(--muted);font-size:.92rem}
+
+/* ---------- 題庫 ---------- */
+.topbar{display:flex;align-items:center;gap:.8rem;padding:.8rem 1.2rem;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.topbar .logo{font-size:1.4rem}
+.topbar .sp{flex:1}
+.lib{max-width:1040px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+.lib h1{font-size:1.5rem;margin:.2rem 0 1rem}
+.lib-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.resume{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;background:#fff0e8;border:1.5px solid #ffc7ad;border-radius:.9rem;padding:.8rem 1rem;margin-bottom:1rem}
+.resume .sp{flex:1}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.qcard{background:#fff;border:1.5px solid var(--line);border-radius:1rem;padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.5rem}
+.qcard h3{margin:0;font-size:1.15rem;word-break:break-word}
+.qcard .meta{color:var(--muted);font-size:.88rem}
+.qcard .types{display:flex;gap:.3rem;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:.25em;background:var(--soft);border-radius:99px;padding:.1em .6em;font-size:.8rem}
+.qcard .acts{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto;padding-top:.4rem}
+.empty{border:2px dashed var(--line);border-radius:1rem;padding:2rem;text-align:center;color:var(--muted)}
+
+/* ---------- 編輯器 ---------- */
+.ed{height:100%;display:flex;flex-direction:column}
+.title-in{font-size:1.15rem;font-weight:700;border:1.5px solid transparent;border-radius:.5em;padding:.3em .5em;min-width:12em;flex:1;max-width:28em;background:transparent}
+.title-in:hover,.title-in:focus{border-color:var(--line);background:#fff;outline:none}
+.saved{color:var(--muted);font-size:.85rem;min-width:4em}
+.ed-body{flex:1;display:grid;grid-template-columns:300px 1fr;min-height:0}
+.ed-list{border-right:1px solid var(--line);overflow:auto;padding:.8rem;display:flex;flex-direction:column;gap:.4rem;background:#faf8f3}
+.ed-item{display:flex;gap:.6rem;align-items:flex-start;padding:.55rem .65rem;border-radius:.7rem;border:1.5px solid transparent;background:#fff;cursor:pointer;text-align:left;width:100%}
+.ed-item.sel{border-color:var(--accent);box-shadow:0 2px 10px rgba(255,107,53,.15)}
+.ed-item .n{font-weight:800;color:var(--muted);min-width:1.4em}
+.ed-item .t{flex:1;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:.92rem}
+.ed-item .ty{font-size:.75rem;color:var(--muted);white-space:nowrap}
+.ed-item.bad{border-color:#f3b4b6}
+.ed-add{display:grid;grid-template-columns:1fr 1fr;gap:.35rem;margin-top:.4rem}
+.ed-add .btn{font-size:.85rem;padding:.4em .5em}
+.ed-main{overflow:auto;padding:1.2rem 1.6rem 3rem}
+.ed-main .inner{max-width:760px;display:flex;flex-direction:column;gap:1rem}
+.fl{font-weight:700;font-size:.92rem;margin-bottom:.35rem;display:block}
+.hint{color:var(--muted);font-size:.85rem}
+.seg{display:flex;flex-wrap:wrap;gap:.35rem}
+.seg button{border:1.5px solid var(--line);background:#fff;border-radius:99px;padding:.3em .85em;font-size:.9rem}
+.seg button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.optrow{display:flex;gap:.5rem;align-items:center;margin-bottom:.45rem}
+.optrow .lt{width:2rem;height:2rem;border-radius:.5rem;background:var(--oc);color:#fff;font-weight:800;display:flex;align-items:center;justify-content:center;flex:none}
+.optrow .ok{display:flex;align-items:center;gap:.3em;white-space:nowrap;font-size:.9rem;border:1.5px solid var(--line);border-radius:.6em;padding:.35em .6em;cursor:pointer;background:#fff}
+.optrow .ok.on{background:#e3f7ec;border-color:var(--good);color:#11743f;font-weight:700}
+.optrow .x{border:none;background:none;color:var(--muted);font-size:1.1rem;padding:.2em .4em}
+.rowflex{display:flex;gap:1rem;align-items:center;flex-wrap:wrap}
+.tfpick{display:flex;gap:.6rem}
+.tfpick button{flex:1;max-width:200px;padding:.8em;border-radius:.8em;border:2px solid var(--line);background:#fff;font-size:1.1rem;font-weight:700}
+.tfpick button.on{border-color:var(--good);background:#e3f7ec;color:#11743f}
+.preview-box{border:1.5px dashed var(--line);border-radius:.8rem;padding:.8rem 1rem;background:#fff}
+@media (max-width:760px){.ed-body{grid-template-columns:1fr}.ed-list{border-right:none;border-bottom:1px solid var(--line);max-height:34vh}}
+
+/* ---------- 主持（投影）畫面 ---------- */
+body.stage{background:var(--stage);color:#fff;overflow:hidden}
+.host{height:100vh;display:flex;flex-direction:column;font-size:clamp(9px,min(1.55vw,2.75vh),40px);
+  background:radial-gradient(80em 40em at 85% -10%,rgba(255,107,53,.18),transparent 60%),radial-gradient(60em 40em at -10% 110%,rgba(47,127,216,.22),transparent 60%),var(--stage)}
+.hbar{display:flex;align-items:center;gap:.8em;padding:.6em 1.2em;font-size:.9em}
+.hbar .logo{color:#fff;font-size:1.6em}
+.hbar .title{opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:30em}
+.hbar .sp{flex:1}
+.pinchip{background:#fff;color:var(--ink);border-radius:.5em;padding:.15em .7em;font-weight:800;letter-spacing:.12em}
+.pc{display:flex;align-items:center;gap:.3em;opacity:.85}
+.hbtn{background:rgba(255,255,255,.1);border:none;color:#fff;border-radius:.5em;padding:.3em .6em;font-size:1em}
+.hbtn:hover{background:rgba(255,255,255,.2)}
+#stage{flex:1;min-height:0;display:flex;flex-direction:column;padding:0 2em}
+.hctl{display:flex;align-items:center;gap:.6em;padding:.7em 1.2em 1em;justify-content:flex-end;font-size:.9em}
+.hctl .tip{opacity:.5;margin-right:auto;font-size:.85em}
+.sbtn{border:none;border-radius:.6em;padding:.55em 1.3em;font-weight:800;font-size:1.05em;background:rgba(255,255,255,.12);color:#fff}
+.sbtn:hover{background:rgba(255,255,255,.22)}
+.sbtn.go{background:var(--accent);box-shadow:0 .3em 0 #c24a1f}
+.sbtn.go:hover{background:var(--accent2)}
+.sbtn.go:active{transform:translateY(.15em);box-shadow:0 .15em 0 #c24a1f}
+
+.lobby{flex:1;display:grid;grid-template-columns:1.25fr 1fr;gap:2em;align-items:center;min-height:0}
+.lobby-l .step{font-size:1.1em;opacity:.7;margin-top:.6em}
+.lobby-l .url{font-size:1.9em;font-weight:800;word-break:break-all;line-height:1.2}
+.lobby-l .bigpin{font-size:5.4em;font-weight:900;letter-spacing:.06em;line-height:1.05;color:#fff}
+.qrbox{background:#fff;border-radius:1em;padding:.8em;justify-self:center;text-align:center;color:var(--ink);max-width:100%}
+.qrbox img{width:min(14em,32vh);height:auto;display:block;image-rendering:pixelated}
+.qrbox .small{font-size:.8em;margin-top:.3em}
+.plist-wrap{padding:.6em 0 0;max-height:34%;display:flex;flex-direction:column;min-height:5em}
+.plist-h{font-size:1em;opacity:.85;margin-bottom:.4em}
+.plist-h b{font-size:1.4em;color:var(--accent2)}
+.plist{display:flex;flex-wrap:wrap;gap:.45em;overflow:auto;align-content:flex-start}
+.pchip{background:rgba(255,255,255,.12);border:none;color:#fff;border-radius:99px;padding:.25em .8em;font-weight:700;font-size:1em;animation:pop .25s}
+.pchip:hover{background:var(--bad);text-decoration:line-through}
+
+.qv{flex:1;display:flex;flex-direction:column;min-height:0;gap:.8em}
+.q-meta{font-size:.95em;opacity:.7;display:flex;gap:.6em;align-items:center}
+.x2{background:var(--accent);color:#fff;border-radius:.4em;padding:0 .5em;font-weight:800;opacity:1}
+.q-text{max-height:55%;overflow:auto;flex:none;font-size:2.1em;font-weight:800;line-height:1.3;background:#fff;color:var(--ink);border-radius:.45em;padding:.45em .7em;text-align:center}
+.q-text pre.code{font-size:.6em}
+.q-mid{display:flex;align-items:center;justify-content:space-between;gap:1em;flex:1 0 auto;min-height:5.8em}
+.ring{position:relative;width:5.5em;height:5.5em;flex:none}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2.2em;font-weight:900}
+.acount{text-align:center;line-height:1.1}
+.acount b{font-size:2.6em;display:block}
+.acount span{opacity:.7}
+.q-center{flex:1;display:flex;align-items:center;justify-content:center;min-height:0;overflow:hidden}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:.6em}
+.opts.n5,.opts.n6{grid-template-columns:1fr 1fr 1fr}
+.opt{background:var(--oc);border-radius:.5em;padding:.6em .8em;display:flex;align-items:center;gap:.6em;font-size:1.35em;font-weight:700;min-height:2.6em;transition:opacity .3s,filter .3s}
+.opt .lt{width:1.7em;height:1.7em;border-radius:50%;background:rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-weight:900;flex:none}
+.opt .tx{flex:1}
+.opt.dim{opacity:.28;filter:grayscale(.6)}
+.opt .mk{font-size:1.2em}
+.prep{display:none}
+.qv.prepping .q-mid,.qv.prepping .opts,.qv.prepping .ordlist{display:none}
+.qv.prepping .prep{display:flex;flex:1;flex-direction:column;align-items:center;justify-content:center;gap:.6em}
+.prep-n{font-size:4em;font-weight:900}
+.prep-bar{width:40%;height:.5em;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden}
+.prep-bar i{display:block;height:100%;background:var(--accent);width:0}
+.ordlist{display:flex;flex-direction:column;gap:.4em}
+.ord{background:rgba(255,255,255,.1);border-radius:.5em;padding:.45em .8em;font-size:1.3em;font-weight:700;display:flex;gap:.7em;align-items:center}
+.ord .k{background:#fff;color:var(--ink);border-radius:50%;width:1.6em;height:1.6em;display:flex;align-items:center;justify-content:center;font-weight:900;flex:none}
+.ord.good{background:var(--good)}
+.hintbig{font-size:1.6em;opacity:.75;text-align:center}
+
+.bars{display:flex;align-items:flex-end;justify-content:center;gap:1.2em;height:100%;max-height:12em;min-height:5em}
+.bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;width:5em;height:100%}
+.bar .cnt{font-weight:900;font-size:1.4em}
+.bar .col{width:100%;background:var(--oc);border-radius:.3em .3em 0 0;min-height:.3em;transition:height .6s cubic-bezier(.2,.9,.3,1.2)}
+.bar .base{width:100%;background:var(--oc);text-align:center;font-weight:900;border-radius:0 0 .3em .3em;padding:.1em 0;filter:brightness(.85)}
+.bar.dim{opacity:.3}
+.summary{font-size:1.3em;text-align:center;opacity:.9}
+.summary b{color:#7ff0b0;font-size:1.3em}
+.tlist{display:flex;flex-direction:column;gap:.4em;min-width:50%}
+.trow{display:flex;justify-content:space-between;gap:1em;background:rgba(255,255,255,.1);border-radius:.5em;padding:.4em .9em;font-size:1.25em;font-weight:700}
+.trow.good{background:var(--good)}
+.cloud{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:.25em .7em;max-width:100%;padding:.5em;line-height:1.15}
+.cw{font-weight:900;animation:pop .4s}
+.cw sup{font-size:.4em;opacity:.7;margin-left:.15em}
+.cw.c0{color:#ffb38f}.cw.c1{color:#7fe3cf}.cw.c2{color:#ffd56b}.cw.c3{color:#c2b2ff}.cw.c4{color:#ff9fc4}.cw.c5{color:#9cc8ff}
+
+.board{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.5em}
+.board h2{font-size:2em;margin:0 0 .3em}
+.brow{display:flex;align-items:center;gap:.8em;width:min(36em,90%);background:#fff;color:var(--ink);border-radius:.5em;padding:.45em .9em;font-size:1.3em;font-weight:800;animation:pop .3s backwards}
+.brow .rk{width:1.6em;text-align:center;color:var(--muted)}
+.brow .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brow .dl{font-size:.75em;color:var(--good);min-width:4em;text-align:right}
+.brow .sc{min-width:4em;text-align:right}
+.brow .fire{font-size:.8em}
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:1em;flex:1;min-height:0;padding-top:1em}
+.pod{display:flex;flex-direction:column;align-items:center;width:9em}
+.pod .nm{font-weight:900;font-size:1.35em;text-align:center;word-break:break-all;line-height:1.2}
+.pod .sc{opacity:.8;margin-bottom:.3em}
+.pod .blk{width:100%;border-radius:.5em .5em 0 0;display:flex;align-items:flex-start;justify-content:center;font-size:2.6em;font-weight:900;padding-top:.15em;animation:rise .8s cubic-bezier(.2,.9,.3,1.1) backwards}
+.pod.p1 .blk{height:7.5em;background:linear-gradient(#ffcf4a,#e09b00);animation-delay:1.2s}
+.pod.p2 .blk{height:5.2em;background:linear-gradient(#e3e8f2,#a9b3c7);color:var(--ink);animation-delay:.6s}
+.pod.p3 .blk{height:3.8em;background:linear-gradient(#f1b48a,#c37445);animation-delay:0s}
+@keyframes rise{from{transform:scaleY(0);transform-origin:bottom;opacity:0}to{transform:scaleY(1);transform-origin:bottom;opacity:1}}
+.rest{display:flex;flex-wrap:wrap;justify-content:center;gap:.4em;padding:.6em 0;font-size:.95em;opacity:.85}
+
+.present{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.6em}
+.present h1{font-size:3em;margin:0;line-height:1.2}
+.present .sub{opacity:.7;font-size:1.2em}
+.present .sbtn{font-size:1.6em;padding:.5em 1.6em;margin-top:.6em}
+
+/* ---------- 學員畫面 ---------- */
+body.player{background:var(--stage);color:#fff}
+.pl{min-height:100vh;min-height:100dvh;display:flex;flex-direction:column}
+.pbar{display:flex;justify-content:space-between;align-items:center;padding:.7rem 1rem;background:rgba(0,0,0,.2);font-weight:700}
+.pscore{background:#fff;color:var(--ink);border-radius:99px;padding:.1em .8em}
+.ptime{height:6px;background:rgba(255,255,255,.12)}
+.ptime i{display:block;height:100%;background:var(--accent);width:100%;transition:width .25s linear}
+#pmain{flex:1;display:flex;flex-direction:column;padding:1rem;gap:1rem}
+.pcenter{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:.6rem}
+.pbig{font-size:2rem;font-weight:900;line-height:1.2}
+.pemo{font-size:4rem;line-height:1}
+.pq-text{font-size:1.15rem;font-weight:700;background:#fff;color:var(--ink);border-radius:.7rem;padding:.7rem .9rem}
+.pq-text pre.code{font-size:.8rem}
+.pans{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;flex:1}
+.pans.n2{grid-template-columns:1fr}
+.pbtn{background:var(--oc);border:none;color:#fff;border-radius:.9rem;font-weight:800;font-size:1.15rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.3rem;padding:.8rem .5rem;min-height:5.5rem;box-shadow:0 .3rem 0 rgba(0,0,0,.25);word-break:break-word}
+.pbtn:active{transform:translateY(.2rem);box-shadow:none}
+.pbtn .lt{font-size:1.6rem;font-weight:900;opacity:.9}
+.ptype{display:flex;flex-direction:column;gap:.7rem}
+.ptype input{font-size:1.4rem;text-align:center;padding:.7rem;border-radius:.8rem;border:none;color:var(--ink)}
+.ptype .btn{font-size:1.2rem;padding:.75rem}
+.pord{display:flex;flex-direction:column;gap:.5rem}
+.pord .it{display:flex;align-items:center;gap:.5rem;background:#fff;color:var(--ink);border-radius:.7rem;padding:.5rem .6rem;font-weight:700}
+.pord .it .k{background:var(--ink);color:#fff;border-radius:50%;width:1.6rem;height:1.6rem;display:flex;align-items:center;justify-content:center;flex:none;font-size:.9rem}
+.pord .it .tx{flex:1}
+.pord .it button{border:none;background:var(--soft);border-radius:.5rem;width:2.4rem;height:2.2rem;font-size:1rem}
+.pord .it button:disabled{opacity:.3}
+.pres-ok{background:var(--good);border-radius:1.2rem;padding:1.4rem;width:100%}
+.pres-bad{background:var(--bad);border-radius:1.2rem;padding:1.4rem;width:100%}
+.pres-none{background:rgba(255,255,255,.12);border-radius:1.2rem;padding:1.4rem;width:100%}
+.pts{font-size:2.4rem;font-weight:900}
+.picked{display:inline-flex;align-items:center;gap:.5em;background:var(--oc);border-radius:.7rem;padding:.4em .9em;font-weight:800}
+
+/* ---------- 遙控 ---------- */
+body.remote{background:#0b1229;color:#fff}
+.rm{min-height:100vh;display:flex;flex-direction:column;gap:.9rem;padding:1rem;max-width:520px;margin:0 auto}
+.rm-h{display:flex;justify-content:space-between;align-items:center;font-weight:700}
+.rm-card{background:rgba(255,255,255,.07);border-radius:1rem;padding:1rem}
+.rm-phase{font-size:.9rem;opacity:.7}
+.rm-q{font-weight:800;font-size:1.1rem;margin-top:.2rem}
+.rm-text{opacity:.85;margin-top:.3rem;font-size:.95rem;max-height:8em;overflow:auto}
+.rm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;text-align:center}
+.rm-stats b{display:block;font-size:1.8rem;line-height:1.1}
+.rm-stats span{font-size:.8rem;opacity:.7}
+.rm-peek{background:#173a2b;border:1px solid #2f7a55;border-radius:1rem;padding:.8rem 1rem}
+.rm-peek span{font-size:.8rem;opacity:.75;display:block}
+.rm-peek b{font-size:1.1rem}
+.rm-main{border:none;border-radius:1.1rem;background:var(--accent);color:#fff;font-size:1.5rem;font-weight:900;padding:1.3rem;box-shadow:0 .35rem 0 #c24a1f}
+.rm-main:active{transform:translateY(.25rem);box-shadow:none}
+.rm-main:disabled{opacity:.4}
+.rm-row{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.rm-row button,.rm-end{border:none;border-radius:.9rem;background:rgba(255,255,255,.1);color:#fff;font-weight:700;padding:.9rem;font-size:1rem}
+.rm-end{color:#ff9b9e}
+
+/* 投影片內嵌提示 */
+.embed-steps{counter-reset:s;list-style:none;padding:0;margin:.4rem 0}
+.embed-steps li{counter-increment:s;position:relative;padding-left:2em;margin:.35em 0}
+.embed-steps li::before{content:counter(s);position:absolute;left:0;top:.05em;width:1.45em;height:1.45em;border-radius:50%;background:var(--ink);color:#fff;font-size:.8em;display:flex;align-items:center;justify-content:center;font-weight:800}
+.copyrow{display:flex;gap:.4rem}
+.copyrow input{flex:1;font-family:var(--mono);font-size:.85rem}
+.tabs{display:flex;gap:.3rem;margin:.6rem 0 .4rem;flex-wrap:wrap}
+.tabs button{border:1.5px solid var(--line);background:#fff;border-radius:.6em;padding:.35em .8em;font-weight:700}
+.tabs button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+</style>
+<script src="config.js"></script>
+<script src="lib/qrcode.js"></script>
+</head>
+<body>
+<script>
+/* 舊版 PowerPoint（IE 核心）提示：這段刻意寫成舊式 JavaScript，IE 也看得懂 */
+(function () {
+  var old = !!document.documentMode || /Trident\//.test(navigator.userAgent) || !window.Promise || !window.fetch;
+  if (!old) return;
+  window.FEIDA_OLD = true;
+  document.write(
+    '<div style="height:100%;background:#111a35;color:#fff;font-family:Microsoft JhengHei,sans-serif;text-align:center;padding:6% 8%;box-sizing:border-box">' +
+    '<div style="font-size:42px;font-weight:900;letter-spacing:4px">飛答</div>' +
+    '<div style="font-size:22px;margin-top:18px;line-height:1.6">這個版本的 PowerPoint 無法直接在投影片裡執行互動畫面。</div>' +
+    '<div style="font-size:22px;margin-top:10px;line-height:1.6">請點投影片上的 <b style="background:#ff6b35;padding:2px 12px;border-radius:8px">▶ 開始互動</b> 按鈕，<br>會用瀏覽器全螢幕開啟。</div>' +
+    '</div>');
+})();
+</script>
+<div id="app"></div>
+<div id="toast"></div>
+<div id="net" class="hidden">連線中斷，重新連線中…</div>
+<script>
+'use strict';
+if (!window.FEIDA_OLD) (function () {
+
+/* ================= 基本設定與小工具 ================= */
+const CFG = (window.FEIDA_FIREBASE_CONFIG && window.FEIDA_FIREBASE_CONFIG.apiKey) ? window.FEIDA_FIREBASE_CONFIG : null;
+const TS = { '.sv': 'timestamp' };
+const PREP_MS = 3000;
+const OC = ['oa', 'ob', 'oc', 'od', 'oe', 'of'];
+const LT = 'ABCDEF';
+const TYPES = {
+  mc:    { name: '選擇題', icon: '☑', scored: true },
+  tf:    { name: '是非題', icon: '◐', scored: true },
+  type:  { name: '填答題', icon: '✎', scored: true },
+  order: { name: '排序題', icon: '⇅', scored: true },
+  poll:  { name: '投票',   icon: '▤', scored: false },
+  cloud: { name: '文字雲', icon: '☁', scored: false },
+};
+const TIMES = [5, 10, 15, 20, 30, 45, 60, 90, 120, 180];
+
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const rand = n => { const a = 'abcdefghjkmnpqrstuvwxyz23456789'; let s = ''; for (const x of crypto.getRandomValues(new Uint8Array(n))) s += a[x % a.length]; return s; };
+const toArr = x => Array.isArray(x) ? x : (x && typeof x === 'object' ? Object.keys(x).sort((a, b) => a - b).map(k => x[k]) : []);
+const shuffle = a => { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const normT = s => String(s == null ? '' : s).normalize('NFKC').toLowerCase().replace(/\s+/g, '').replace(/[。，,．.！!？?、；;：:「」"'“”‘’]/g, '');
+const fmtPin = p => String(p).replace(/(\d{3})(\d{3})/, '$1 $2');
+const app = html => { $('#app').innerHTML = html; };
+const fmt = text => {
+  const parts = String(text || '').split('```');
+  return parts.map((p, i) => {
+    if (i % 2) return '<pre class="code">' + esc(p.replace(/^[a-zA-Z+#]*\n/, '').replace(/\n$/, '')) + '</pre>';
+    return esc(p).replace(/\n/g, '<br>');
+  }).join('');
+};
+const plain = text => String(text || '').replace(/```[\s\S]*?```/g, ' [程式碼] ').replace(/\s+/g, ' ').trim();
+function toast(msg, ms) { const d = document.createElement('div'); d.textContent = msg; $('#toast').appendChild(d); setTimeout(() => d.remove(), ms || 2600); }
+function download(name, content, type) {
+  const blob = content instanceof Blob ? content : new Blob([content], { type: type || 'text/plain;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+}
+function loadScript(src) {
+  return new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => rej(new Error('無法載入 ' + src)); document.head.appendChild(s); });
+}
+function qrImg(text, cell) {
+  try { const q = qrcode(0, 'M'); q.addData(text); q.make(); return '<img alt="QR code" src="' + q.createDataURL(cell || 8, 2) + '">'; }
+  catch (e) { return ''; }
+}
+function baseUrl() { return location.href.split('#')[0].replace(/index\.html$/, ''); }
+function niceUrl() { return baseUrl().replace(/^https?:\/\//, '').replace(/\/$/, ''); }
+let modalEl = null;
+function showModal(html, opts) {
+  closeModal();
+  modalEl = document.createElement('div'); modalEl.className = 'modal-back';
+  modalEl.innerHTML = '<div class="modal">' + html + '</div>';
+  modalEl.addEventListener('click', e => { if (e.target === modalEl && !(opts && opts.sticky)) closeModal(); });
+  document.body.appendChild(modalEl);
+  return modalEl;
+}
+function closeModal() { if (modalEl) { modalEl.remove(); modalEl = null; } }
+function alertBox(title, body) {
+  const m = showModal('<h3>' + esc(title) + '</h3><div>' + body + '</div><div class="mfoot"><button class="btn dark" data-x>知道了</button></div>');
+  $('[data-x]', m).onclick = closeModal;
+}
+function confirmBox(title, body, okText, danger) {
+  return new Promise(res => {
+    const m = showModal('<h3>' + esc(title) + '</h3><div>' + body + '</div><div class="mfoot"><button class="btn" data-n>取消</button><button class="btn ' + (danger ? 'dark' : 'primary') + '" data-y>' + esc(okText || '確定') + '</button></div>');
+    $('[data-n]', m).onclick = () => { closeModal(); res(false); };
+    $('[data-y]', m).onclick = () => { closeModal(); res(true); };
+  });
+}
+let netTimer = null;
+function setNet(ok) {
+  clearTimeout(netTimer);
+  if (ok) $('#net').classList.add('hidden');
+  else netTimer = setTimeout(() => $('#net').classList.remove('hidden'), 2500);
+}
+const Sound = {
+  ctx: null,
+  muted: localStorage.getItem('feida-mute') === '1',
+  beep(f, d, v) {
+    if (this.muted) return;
+    try {
+      this.ctx = this.ctx || new (window.AudioContext || window.webkitAudioContext)();
+      const t = this.ctx.currentTime, o = this.ctx.createOscillator(), g = this.ctx.createGain();
+      o.type = 'triangle'; o.frequency.value = f || 880;
+      g.gain.setValueAtTime(v || .12, t); g.gain.exponentialRampToValueAtTime(.0001, t + (d || .08));
+      o.connect(g).connect(this.ctx.destination); o.start(t); o.stop(t + (d || .08) + .02);
+    } catch (e) {}
+  },
+  chime() { [660, 880, 1320].forEach((f, i) => setTimeout(() => this.beep(f, .2, .1), i * 110)); },
+  toggle() { this.muted = !this.muted; localStorage.setItem('feida-mute', this.muted ? '1' : '0'); return this.muted; }
+};
+
+/* ================= 資料後端：Firebase 或本機試玩 ================= */
+function makeLocal() {
+  const PFX = 'fd:';
+  let uid = sessionStorage.getItem('fd-uid');
+  if (!uid) { uid = 'u' + rand(10); sessionStorage.setItem('fd-uid', uid); }
+  const subs = new Set();
+  const ch = 'BroadcastChannel' in window ? new BroadcastChannel('feida-local') : null;
+  const norm = p => String(p).split('/').filter(Boolean).join('/');
+  const keys = () => { const out = []; for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf(PFX) === 0) out.push(k); } return out; };
+  function flatten(base, v, out) {
+    if (v === null || v === undefined) return;
+    if (typeof v === 'object' && !v['.sv']) {
+      const ks = Object.keys(v);
+      for (const k of ks) flatten(base ? base + '/' + k : k, v[k], out);
+    } else out[base] = (typeof v === 'object') ? Date.now() : v;
+  }
+  function write(p, v) {
+    p = norm(p);
+    for (const k of keys()) { const kp = k.slice(PFX.length); if (kp === p || kp.indexOf(p + '/') === 0) localStorage.removeItem(k); }
+    const parts = p.split('/'); for (let i = 1; i < parts.length; i++) localStorage.removeItem(PFX + parts.slice(0, i).join('/'));
+    const out = {}; flatten(p, v, out);
+    for (const k in out) localStorage.setItem(PFX + k, JSON.stringify(out[k]));
+  }
+  function read(p) {
+    p = norm(p); let res = null;
+    for (const k of keys()) {
+      const kp = k.slice(PFX.length);
+      if (kp === p) return JSON.parse(localStorage.getItem(k));
+      if (p === '' || kp.indexOf(p + '/') === 0) {
+        const rest = (p === '' ? kp : kp.slice(p.length + 1)).split('/');
+        if (res === null) res = {};
+        let o = res; for (let i = 0; i < rest.length - 1; i++) { if (typeof o[rest[i]] !== 'object' || o[rest[i]] === null) o[rest[i]] = {}; o = o[rest[i]]; }
+        o[rest[rest.length - 1]] = JSON.parse(localStorage.getItem(k));
+      }
+    }
+    return res;
+  }
+  function fire() { for (const s of subs) { const v = read(s.p); const j = JSON.stringify(v); if (j !== s.last) { s.last = j; try { s.cb(v); } catch (e) { console.error(e); } } } }
+  function notify() { if (ch) ch.postMessage(1); fire(); }
+  // 其他分頁的 localStorage 變更不一定比廣播訊息先到，所以兩種通知都聽，並合併成一次重讀
+  let pend = null;
+  const soon = () => { if (!pend) pend = setTimeout(() => { pend = null; fire(); }, 15); };
+  if (ch) ch.onmessage = soon;
+  window.addEventListener('storage', e => { if (!e.key || e.key.indexOf(PFX) === 0) soon(); });
+  return {
+    mode: 'local', uid,
+    now: () => Date.now(),
+    async get(p) { return read(p); },
+    async set(p, v) { write(p, v); notify(); },
+    async setOnce(p, v) { if (read(p) !== null) throw new Error('已經送出過了'); write(p, v); notify(); },
+    async update(p, obj) { for (const k in obj) write(norm(p) + '/' + k, obj[k]); notify(); },
+    async remove(p) { write(p, null); notify(); },
+    on(p, cb) { const s = { p, cb, last: undefined }; subs.add(s); setTimeout(() => { if (!subs.has(s)) return; const v = read(p); s.last = JSON.stringify(v); cb(v); }, 0); return () => subs.delete(s); },
+  };
+}
+
+let fbLoading = null;
+function loadFirebase() {
+  if (!fbLoading) {
+    const base = 'https://www.gstatic.com/firebasejs/10.14.1/';
+    fbLoading = loadScript(base + 'firebase-app-compat.js')
+      .then(() => Promise.all([loadScript(base + 'firebase-auth-compat.js'), loadScript(base + 'firebase-database-compat.js')]));
+  }
+  return fbLoading;
+}
+async function makeFirebase(role) {
+  await loadFirebase();
+  const name = 'feida-' + role;
+  const fbApp = firebase.apps.find(a => a.name === name) || firebase.initializeApp(CFG, name);
+  const auth = fbApp.auth();
+  // 學員用「分頁」身分（同一台電腦開多個分頁也算不同人）；講師與遙控用「瀏覽器」身分（關掉再開仍是同一位主持人）
+  await auth.setPersistence(role === 'player' ? firebase.auth.Auth.Persistence.SESSION : firebase.auth.Auth.Persistence.LOCAL);
+  let user = await new Promise(r => { const off = auth.onAuthStateChanged(u => { off(); r(u); }); });
+  if (!user) user = (await auth.signInAnonymously()).user;
+  const db = fbApp.database();
+  let offset = 0;
+  db.ref('.info/serverTimeOffset').on('value', s => { offset = s.val() || 0; });
+  let first = true;
+  db.ref('.info/connected').on('value', s => { if (s.val()) { first = false; setNet(true); } else if (!first) setNet(false); });
+  return {
+    mode: 'firebase', uid: user.uid,
+    now: () => Date.now() + offset,
+    async get(p) { return (await db.ref(p).get()).val(); },
+    set: (p, v) => db.ref(p).set(v),
+    setOnce: (p, v) => db.ref(p).set(v),
+    update: (p, obj) => db.ref(p).update(obj),
+    remove: p => db.ref(p).remove(),
+    on(p, cb) { const r = db.ref(p); const f = s => cb(s.val()); r.on('value', f, err => { console.warn(p, err); toast('讀取失敗：' + err.message); }); return () => r.off('value', f); },
+  };
+}
+const Backends = {};
+function getBackend(role) {
+  role = role === 'player' ? 'player' : 'host';
+  if (!CFG) { Backends.local = Backends.local || Promise.resolve(makeLocal()); return Backends.local; }
+  if (!Backends[role]) Backends[role] = makeFirebase(role).catch(e => { delete Backends[role]; throw e; });
+  return Backends[role];
+}
+const modeBadge = () => CFG ? '' : '<span class="demo-badge">試玩模式：尚未設定 Firebase，只能在這台電腦的分頁之間互動</span>';
+
+/* ================= 題組資料 ================= */
+function newQ(type) {
+  const q = { id: rand(6), type, text: '', options: [], correct: [], answers: [], time: 20, double: false };
+  if (type === 'mc') { q.options = ['', '', '', '']; q.correct = [0]; }
+  if (type === 'tf') { q.options = ['對', '錯']; q.correct = [0]; q.time = 10; }
+  if (type === 'poll') { q.options = ['', '', '']; }
+  if (type === 'order') { q.options = ['', '', '', '']; q.time = 30; }
+  if (type === 'type') { q.answers = ['']; }
+  if (type === 'cloud') { q.time = 30; }
+  return q;
+}
+function changeType(q, type) {
+  const n = newQ(type); n.id = q.id; n.text = q.text; n.double = q.double;
+  const filled = toArr(q.options).filter(o => o && o !== '對' && o !== '錯');
+  if (['mc', 'poll', 'order'].includes(type) && filled.length) { n.options = filled.slice(0, 6); while (n.options.length < 2) n.options.push(''); }
+  return n;
+}
+function normalizeQuiz(raw) {
+  const quiz = Object.assign({ id: rand(8), title: '未命名題組', questions: [] }, raw || {});
+  quiz.questions = toArr(quiz.questions).map(q => {
+    q = Object.assign(newQ(TYPES[q && q.type] ? q.type : 'mc'), q || {});
+    q.options = toArr(q.options).map(x => String(x == null ? '' : x));
+    q.correct = toArr(q.correct).map(Number);
+    q.answers = toArr(q.answers).map(x => String(x == null ? '' : x));
+    q.time = Number(q.time) || 20; q.double = !!q.double; q.id = q.id || rand(6);
+    return q;
+  });
+  return quiz;
+}
+function questionProblems(q) {
+  const errs = [];
+  if (!plain(q.text)) errs.push('題目是空的');
+  const opts = toArr(q.options).map(o => o.trim());
+  if (q.type === 'mc') {
+    if (opts.filter(Boolean).length < 2) errs.push('至少要 2 個選項');
+    if (!q.correct.some(i => opts[i])) errs.push('還沒勾選正確答案');
+  }
+  if (q.type === 'poll' && opts.filter(Boolean).length < 2) errs.push('至少要 2 個選項');
+  if (q.type === 'order' && opts.filter(Boolean).length < 2) errs.push('至少要 2 個項目');
+  if (q.type === 'type' && !q.answers.some(a => a.trim())) errs.push('還沒填可接受的答案');
+  return errs;
+}
+function validateQuiz(quiz) {
+  const out = [];
+  if (!quiz.questions.length) out.push('題組裡還沒有題目');
+  quiz.questions.forEach((q, i) => questionProblems(q).forEach(e => out.push('第 ' + (i + 1) + ' 題：' + e)));
+  return out;
+}
+function cleanQuiz(quiz) {
+  const qz = JSON.parse(JSON.stringify(normalizeQuiz(quiz)));
+  qz.questions = qz.questions.map(q => {
+    q.text = q.text.trim();
+    if (q.type === 'mc' || q.type === 'poll') {
+      const keep = []; const corr = [];
+      q.options.forEach((o, i) => { if (o.trim()) { if (q.correct.includes(i)) corr.push(keep.length); keep.push(o.trim()); } });
+      q.options = keep; q.correct = q.type === 'mc' ? corr : [];
+    }
+    if (q.type === 'order') q.options = q.options.map(o => o.trim()).filter(Boolean);
+    if (q.type === 'tf') q.options = ['對', '錯'];
+    if (q.type === 'type') q.answers = q.answers.map(a => a.trim()).filter(Boolean);
+    return q;
+  });
+  return qz;
+}
+function sampleQuiz() {
+  const qs = [];
+  let q = newQ('mc'); q.text = '無人機足球比賽中，進攻方要怎麼得分？'; q.options = ['飛過對方的球門圈', '把對方撞出場外', '飛得比對方高', '先降落的一方']; q.correct = [0]; qs.push(q);
+  q = newQ('tf'); q.text = '每次飛行前都要先檢查電池電量和螺旋槳。'; q.correct = [0]; qs.push(q);
+  q = newQ('type'); q.text = '「四軸」無人機有幾個螺旋槳？（填數字）'; q.answers = ['4', '四']; q.time = 15; qs.push(q);
+  q = newQ('order'); q.text = '把飛行前的準備排成正確順序'; q.options = ['檢查電池與機身', '打開遙控器', '接上無人機電源', '解鎖起飛']; qs.push(q);
+  q = newQ('mc'); q.text = '這段程式最後印出什麼？\n```python\nx = 3\nfor i in range(3):\n    x = x + i\nprint(x)\n```'; q.options = ['5', '6', '9', '3']; q.correct = [1]; q.time = 30; q.double = true; qs.push(q);
+  q = newQ('poll'); q.text = '今天哪個部分最有趣？'; q.options = ['飛行練習', '分組比賽', '寫程式', '拆裝無人機']; qs.push(q);
+  q = newQ('cloud'); q.text = '用一個詞形容今天的課'; qs.push(q);
+  return { id: rand(8), title: '範例：無人機足球小測驗', questions: qs, updatedAt: Date.now() };
+}
+const Store = {
+  list() {
+    let l = null; try { l = JSON.parse(localStorage.getItem('feida-quizzes')); } catch (e) {}
+    if (!Array.isArray(l)) { l = [sampleQuiz()]; this.save(l); }
+    return l.map(normalizeQuiz);
+  },
+  save(l) { localStorage.setItem('feida-quizzes', JSON.stringify(l)); },
+  get(id) { return this.list().find(q => q.id === id); },
+  put(q) { const l = this.list(); q.updatedAt = Date.now(); const i = l.findIndex(x => x.id === q.id); if (i < 0) l.unshift(q); else l[i] = q; this.save(l); },
+  del(id) { this.save(this.list().filter(q => q.id !== id)); },
+};
+const HostSess = {
+  get() { try { return JSON.parse(localStorage.getItem('feida-host')); } catch (e) { return null; } },
+  save(s) { localStorage.setItem('feida-host', JSON.stringify(s)); },
+  clear() { localStorage.removeItem('feida-host'); },
+};
+
+/* 發布到雲端（投影片用的固定網址） */
+function presentUrl(pubId) { return baseUrl() + '#/present/' + pubId; }
+function quizPayload(quiz, uid) { return { owner: uid, title: quiz.title || '未命名題組', questions: cleanQuiz(quiz).questions, updatedAt: TS }; }
+async function publishQuiz(quiz) {
+  if (!CFG) { if (!quiz.pubId) { quiz.pubId = quiz.id; Store.put(quiz); } return quiz.pubId; }
+  const be = await getBackend('host');
+  if (quiz.pubId) {
+    try { await be.set('quizzes/' + quiz.pubId, quizPayload(quiz, be.uid)); return quiz.pubId; }
+    catch (e) { console.warn('re-publish failed, creating new id', e); }
+  }
+  const id = rand(10);
+  await be.set('quizzes/' + id, quizPayload(quiz, be.uid));
+  quiz.pubId = id; Store.put(quiz);
+  return id;
+}
+let syncTimer = null;
+function syncPublished(quiz) {
+  if (!quiz.pubId || !CFG) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(async () => {
+    try { const be = await getBackend('host'); await be.set('quizzes/' + quiz.pubId, quizPayload(quiz, be.uid)); }
+    catch (e) { toast('雲端版本更新失敗：' + e.message); }
+  }, 1200);
+}
+async function loadPublished(pubId) {
+  if (!CFG) { const q = Store.list().find(x => x.pubId === pubId || x.id === pubId); return q || null; }
+  const be = await getBackend('host');
+  const raw = await be.get('quizzes/' + pubId);
+  return raw ? normalizeQuiz(Object.assign({}, raw, { id: pubId })) : null;
+}
+
+/* ================= 匯入 Excel / CSV ================= */
+const TYPE_ALIAS = {
+  mc: ['mc', '選擇', '選擇題', '單選', '單選題', '多選', '多選題', 'choice', 'quiz'],
+  tf: ['tf', '是非', '是非題', '對錯', '對錯題', 'truefalse', 'true/false'],
+  type: ['type', '填答', '填答題', '填空', '填空題', '簡答', '問答'],
+  order: ['order', '排序', '排序題', 'puzzle'],
+  poll: ['poll', '投票', '意見', '調查'],
+  cloud: ['cloud', '文字雲', 'wordcloud', '詞雲'],
+};
+function typeOf(s) { const t = normT(s); for (const k in TYPE_ALIAS) if (TYPE_ALIAS[k].map(normT).includes(t)) return k; return null; }
+function parseDelimited(text) {
+  text = text.replace(/^﻿/, '');
+  const firstLine = text.split(/\r?\n/)[0] || '';
+  const d = firstLine.includes('\t') ? '\t' : ',';
+  const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"' && f === '') q = true;
+    else if (c === d) { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  return rows;
+}
+function rowsToQuestions(rows) {
+  const out = [], errs = [];
+  rows.forEach((r, ri) => {
+    r = r.map(c => String(c == null ? '' : c).trim());
+    if (!r.some(Boolean)) return;
+    if (ri === 0 && /題型|type/i.test(r[0]) && !typeOf(r[0])) return;
+    const line = ri + 1;
+    const type = typeOf(r[0]);
+    if (!type) { errs.push('第 ' + line + ' 列：看不懂題型「' + r[0] + '」'); return; }
+    const q = newQ(type); q.text = (r[1] || '').replace(/\\n/g, '\n');
+    // 固定欄位：題型, 題目, 選項A~D, 答案, 秒數
+    const options = [r[2], r[3], r[4], r[5]].map(x => x || '');
+    const ans = r[6] || ''; const sec = parseInt(r[7], 10);
+    if (sec >= 5 && sec <= 240) q.time = sec;
+    if (type === 'mc' || type === 'poll' || type === 'order') {
+      q.options = options.filter(Boolean);
+      if (q.options.length < 2) { errs.push('第 ' + line + ' 列：選項少於 2 個'); return; }
+    }
+    if (type === 'mc') {
+      const idx = ans.split(/[,，、\s/／;；]+/).filter(Boolean).map(a => {
+        const L = a.toUpperCase(); if (/^[A-F]$/.test(L)) return LT.indexOf(L);
+        const n = parseInt(a, 10); if (n >= 1 && n <= 6) return n - 1;
+        const k = q.options.findIndex(o => normT(o) === normT(a)); return k;
+      }).filter(i => i >= 0 && i < q.options.length);
+      if (!idx.length) { errs.push('第 ' + line + ' 列：選擇題的答案要寫 A、B、C、D（可多個，用逗號分開）'); return; }
+      q.correct = Array.from(new Set(idx));
+    }
+    if (type === 'tf') {
+      if (/^(對|o|○|◯|t|true|是|正確|v|✓|✔|yes|y)$/i.test(ans)) q.correct = [0];
+      else if (/^(錯|x|×|✗|✘|f|false|否|錯誤|no|n)$/i.test(ans)) q.correct = [1];
+      else { errs.push('第 ' + line + ' 列：是非題的答案要寫「對」或「錯」'); return; }
+    }
+    if (type === 'type') {
+      q.answers = ans.split(/[|｜]/).map(s => s.trim()).filter(Boolean);
+      if (!q.answers.length) { errs.push('第 ' + line + ' 列：填答題要在「答案」欄寫可接受的答案（多個用 | 分開）'); return; }
+    }
+    if (!plain(q.text)) { errs.push('第 ' + line + ' 列：題目是空的'); return; }
+    out.push(q);
+  });
+  return { questions: out, errors: errs };
+}
+function decodeText(buf) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(buf); }
+  catch (e) { try { return new TextDecoder('big5').decode(buf); } catch (e2) { return new TextDecoder('utf-8').decode(buf); } }
+}
+async function readQuestionFile(file) {
+  const buf = await file.arrayBuffer();
+  if (/\.(xlsx|xls|ods)$/i.test(file.name)) {
+    if (!window.XLSX) await loadScript('lib/xlsx.full.min.js');
+    const wb = XLSX.read(buf, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    return XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false });
+  }
+  return parseDelimited(decodeText(buf));
+}
+const TEMPLATE_CSV = [
+  '題型,題目,選項A,選項B,選項C,選項D,答案,秒數',
+  '選擇,台灣最高的山是？,玉山,雪山,合歡山,阿里山,A,20',
+  '選擇,下面哪些是偶數？（多個正確，學生選其中一個就算對）,1,2,3,4,"B,D",20',
+  '是非,一大氣壓下水在 100°C 沸騰,,,,,對,10',
+  '填答,一打是幾個？,,,,,12|十二,20',
+  '排序,由小到大排列（選項請照正確順序填）,1,10,100,1000,,30',
+  '投票,你最喜歡哪個活動？,飛行,寫程式,比賽,,,20',
+  '文字雲,用一個詞形容今天,,,,,,30',
+].join('\r\n');
+
+/* ================= 計分與統計 ================= */
+function checkAnswer(q, v, perm) {
+  if (q.type === 'mc' || q.type === 'tf') return q.correct.includes(Number(v));
+  if (q.type === 'type') return q.answers.some(a => normT(a) === normT(v));
+  if (q.type === 'order') { const arr = toArr(v).map(Number); return !!perm && arr.length === perm.length && arr.every((j, k) => perm[j] === k); }
+  return false;
+}
+function correctOrder(perm) { return perm.map((_, k) => perm.indexOf(k)); }
+function revealPayload(q, perm) {
+  if (q.type === 'mc' || q.type === 'tf') return { correct: q.correct };
+  if (q.type === 'type') return { answers: q.answers };
+  if (q.type === 'order') return { order: correctOrder(perm || []) };
+  return { none: true };
+}
+function computeStats(q, ans, players, perm) {
+  const vals = Object.keys(ans || {}).filter(u => players[u]).map(u => ans[u].v);
+  const st = { n: vals.length };
+  if (['mc', 'tf', 'poll'].includes(q.type)) {
+    st.counts = q.options.map(() => 0);
+    vals.forEach(v => { v = Number(v); if (v >= 0 && v < st.counts.length) st.counts[v]++; });
+  }
+  if (q.type === 'type' || q.type === 'cloud') {
+    const m = new Map();
+    vals.forEach(v => { const t = String(v).trim(); const k = normT(t); if (!k) return; const e = m.get(k) || { t, n: 0 }; e.n++; m.set(k, e); });
+    const list = Array.from(m.values()).sort((a, b) => b.n - a.n);
+    if (q.type === 'type') { st.top = list.slice(0, 6).map(e => ({ t: e.t, n: e.n, ok: checkAnswer(q, e.t) })); st.right = vals.filter(v => checkAnswer(q, v)).length; }
+    else st.words = list.slice(0, 40);
+  }
+  if (q.type === 'order') st.right = vals.filter(v => checkAnswer(q, v, perm)).length;
+  if (q.type === 'mc' || q.type === 'tf') st.right = vals.filter(v => checkAnswer(q, v)).length;
+  return st;
+}
+function answerText(q) {
+  if (q.type === 'mc' || q.type === 'tf') return q.correct.map(i => LT[i] + '. ' + q.options[i]).join('　');
+  if (q.type === 'type') return q.answers.join(' / ');
+  if (q.type === 'order') return q.options.join(' → ');
+  return '（不計分）';
+}
+function cloudHTML(words) {
+  if (!words || !words.length) return '<div class="hintbig">還沒有人回答</div>';
+  const max = Math.max.apply(null, words.map(w => w.n));
+  const sorted = words.slice(0, 40); const arranged = [];
+  sorted.forEach((w, i) => { if (i % 2) arranged.push(w); else arranged.unshift(w); });
+  return '<div class="cloud">' + arranged.map((w, i) => '<span class="cw c' + (i % 6) + '" style="font-size:' + (1.1 + 2.6 * (w.n / max)).toFixed(2) + 'em">' + esc(w.t) + (w.n > 1 ? '<sup>' + w.n + '</sup>' : '') + '</span>').join('') + '</div>';
+}
+
+/* ================= 路由 ================= */
+let cleanups = [];
+function onCleanup(f) { cleanups.push(f); }
+async function route() {
+  cleanups.forEach(f => { try { f(); } catch (e) {} }); cleanups = []; closeModal();
+  document.body.className = '';
+  const parts = location.hash.replace(/^#\/?/, '').split('/').map(decodeURIComponent);
+  const r = parts[0], a = parts[1], b = parts[2];
+  try {
+    if (r === '' || r === 'join') return await viewJoin(a);
+    if (r === 'play') return await viewPlay(a);
+    if (r === 'host') return await viewLibrary();
+    if (r === 'edit') return await viewEditor(a);
+    if (r === 'game') return await viewGame(a);
+    if (r === 'present') return await viewPresent(a);
+    if (r === 'remote') return await viewRemote(a, b);
+    location.hash = '#/';
+  } catch (e) {
+    console.error(e);
+    app('<div class="center-msg"><h2>出了點問題</h2><p class="muted">' + esc(e.message || e) + '</p><p class="muted">如果是剛設定 Firebase，請確認 config.js、匿名登入與資料庫規則都已完成。</p><a class="btn" href="#/">回首頁</a></div>');
+  }
+}
+
+/* ================= 學員：加入 ================= */
+async function viewJoin(pin) {
+  document.body.className = 'joinpage';
+  app('<div class="join">' +
+    '<div class="brand"><div class="logo">飛<b>答</b></div><div class="tag">課堂即時互動 · 輸入 PIN 就能加入</div></div>' +
+    '<form class="jcard" id="jf" autocomplete="off">' +
+      '<div id="s1"><input class="in big" id="pin" inputmode="numeric" maxlength="7" placeholder="活動 PIN" value="' + esc(pin || '') + '"></div>' +
+      '<div id="s2" class="hidden"><div class="muted" style="text-align:center" id="gt"></div><input class="in name" id="nm" maxlength="12" placeholder="你的暱稱"></div>' +
+      '<div class="jerr" id="je"></div>' +
+      '<button class="btn primary" id="jb">下一步</button>' +
+    '</form>' +
+    '<a class="hostlink" href="#/host">我是講師 →</a>' + modeBadge() +
+  '</div>');
+  let stage = 1, okPin = null, be = null;
+  const err = m => { $('#je').textContent = m || ''; };
+  async function checkPin(p) {
+    p = String(p).replace(/\D/g, '');
+    if (p.length !== 6) { err('PIN 是 6 位數字'); return; }
+    $('#jb').disabled = true; err('');
+    try {
+      be = be || await getBackend('player');
+      const g = await be.get('games/' + p + '/state');
+      if (!g) { err('找不到這個 PIN，請再確認一次'); return; }
+      if (g.phase === 'end') { err('這場活動已經結束了'); return; }
+      if (await be.get('games/' + p + '/kicked/' + be.uid)) { err('你已被講師移出這場活動'); return; }
+      if (await be.get('games/' + p + '/players/' + be.uid)) { location.hash = '#/play/' + p; return; }
+      okPin = p; stage = 2;
+      $('#s1').classList.add('hidden'); $('#s2').classList.remove('hidden');
+      $('#gt').textContent = 'PIN ' + fmtPin(p) + '　·　取一個暱稱吧';
+      $('#jb').textContent = '加入！'; $('#nm').focus();
+    } catch (e) { err('連線失敗：' + e.message); }
+    finally { $('#jb').disabled = false; }
+  }
+  $('#jf').onsubmit = async e => {
+    e.preventDefault();
+    if (stage === 1) return checkPin($('#pin').value);
+    const name = $('#nm').value.trim().slice(0, 12);
+    if (!name) { err('請輸入暱稱'); return; }
+    $('#jb').disabled = true;
+    try { await be.set('games/' + okPin + '/players/' + be.uid, { name, at: TS }); location.hash = '#/play/' + okPin; }
+    catch (e2) { err('加入失敗：' + e2.message); $('#jb').disabled = false; }
+  };
+  if (pin) checkPin(pin); else $('#pin').focus();
+}
+
+/* ================= 學員：作答 ================= */
+async function viewPlay(pin) {
+  const be = await getBackend('player');
+  document.body.className = 'player';
+  const me = await be.get('games/' + pin + '/players/' + be.uid);
+  if (!me) { location.hash = '#/join/' + pin; return; }
+  app('<div class="pl"><div class="pbar"><span>' + esc(me.name) + '</span><span class="pscore" id="psc">0 分</span></div><div class="ptime hidden" id="ptime"><i id="ptbar"></i></div><div id="pmain"></div></div>');
+  const P = { pin, be, st: undefined, cur: undefined, score: null, mine: null, kicked: false, key: null, sent: null, order: null, orderQid: null };
+  const subs = [];
+  let ansQid = null, ansOff = null;
+  const upd = () => {
+    const qid = P.st && P.st.qid;
+    if (qid !== ansQid) { if (ansOff) ansOff(); ansOff = null; ansQid = qid; P.mine = null; if (qid) ansOff = be.on('games/' + pin + '/answers/' + qid + '/' + be.uid, v => { P.mine = v; renderPlayer(P); }); }
+    renderPlayer(P);
+  };
+  subs.push(be.on('games/' + pin + '/state', v => { P.st = v; upd(); }));
+  subs.push(be.on('games/' + pin + '/current', v => { P.cur = v; upd(); }));
+  subs.push(be.on('games/' + pin + '/scores/' + be.uid, v => { P.score = v; upd(); }));
+  subs.push(be.on('games/' + pin + '/players/' + be.uid, v => { P.kicked = v === null; upd(); }));
+  const iv = setInterval(() => renderPlayer(P, true), 250);
+  onCleanup(() => { subs.forEach(f => f()); if (ansOff) ansOff(); clearInterval(iv); });
+}
+function renderPlayer(P, tick) {
+  const main = $('#pmain'); if (!main) return;
+  const st = P.st, cur = P.cur, now = P.be.now();
+  $('#psc').textContent = ((P.score && P.score.score) || 0) + ' 分';
+  let key;
+  const inQ = st && st.phase === 'question' && cur && cur.qid === st.qid;
+  if (st === undefined || cur === undefined) key = 'load';
+  else if (st === null) key = 'gone';
+  else if (P.kicked) key = 'kicked';
+  else if (st.qid && (!cur || cur.qid !== st.qid)) key = 'sync';
+  else if (st.phase === 'reveal' && !cur.reveal) key = 'sync';
+  else {
+    const sub = !!P.mine || P.sent === st.qid;
+    key = [st.phase, st.qid || '', sub ? 's' : '', inQ && now < st.startedAt ? 'p' : '', inQ && now >= st.endsAt ? 'o' : '',
+      (P.score && P.score.last && P.score.last.qid) || '', (P.score && P.score.rank) || ''].join('|');
+  }
+  // 計時條
+  const bar = $('#ptime');
+  if (inQ && now >= st.startedAt) {
+    bar.classList.remove('hidden');
+    const left = Math.max(0, st.endsAt - now), total = st.endsAt - st.startedAt;
+    $('#ptbar').style.width = (100 * left / total).toFixed(1) + '%';
+  } else bar.classList.add('hidden');
+  if (inQ && now < st.startedAt) { const n = $('#pprep'); if (n) n.textContent = Math.ceil((st.startedAt - now) / 1000); }
+  if (key === P.key) return;
+  P.key = key;
+  main.innerHTML = playerHTML(P, key);
+  bindPlayer(P);
+}
+function optLabel(cur, i) { return LT[i] + '. ' + (toArr(cur.options)[i] || ''); }
+function playerHTML(P, key) {
+  const st = P.st, cur = P.cur;
+  const center = inner => '<div class="pcenter">' + inner + '</div>';
+  if (key === 'load' || key === 'sync') return center('<div class="muted">連線中…</div>');
+  if (key === 'gone') return center('<div class="pemo">👋</div><div class="pbig">活動已結束</div><a class="btn" href="#/">回首頁</a>');
+  if (key === 'kicked') return center('<div class="pemo">🚪</div><div class="pbig">你已被講師移出</div><a class="btn" href="#/">回首頁</a>');
+  const sc = P.score || {};
+  if (st.phase === 'lobby') return center('<div class="pemo">✅</div><div class="pbig">你已加入！</div><div class="muted">看大螢幕，等講師開始</div>');
+  if (st.phase === 'question') {
+    const now = P.be.now();
+    if (now < st.startedAt) return center('<div class="muted">第 ' + (cur.idx + 1) + ' / ' + cur.total + ' 題 · ' + TYPES[cur.type].name + (cur.double ? ' · 雙倍分數' : '') + '</div><div class="pq-text" style="width:100%">' + fmt(cur.text) + '</div><div class="pbig" id="pprep">3</div><div class="muted">準備作答…</div>');
+    if (P.mine || P.sent === st.qid) {
+      let mine = '';
+      const v = P.mine ? P.mine.v : P.sentV;
+      if (['mc', 'tf', 'poll'].includes(cur.type) && v != null) mine = '<div class="picked ' + OC[v] + '">' + esc(optLabel(cur, v)) + '</div>';
+      else if ((cur.type === 'type' || cur.type === 'cloud') && v != null) mine = '<div class="picked" style="--oc:rgba(255,255,255,.15)">' + esc(v) + '</div>';
+      return center('<div class="pemo">📨</div><div class="pbig">已送出！</div>' + mine + '<div class="muted">等其他人作答…</div>');
+    }
+    if (now >= st.endsAt) return center('<div class="pemo">⏰</div><div class="pbig">時間到！</div>');
+    const opts = toArr(cur.options);
+    let body = '';
+    if (['mc', 'tf', 'poll'].includes(cur.type)) {
+      body = '<div class="pans n' + opts.length + '">' + opts.map((o, i) => '<button class="pbtn ' + OC[i] + '" data-v="' + i + '"><span class="lt">' + LT[i] + '</span><span>' + esc(o) + '</span></button>').join('') + '</div>';
+    } else if (cur.type === 'type' || cur.type === 'cloud') {
+      body = '<form class="ptype" id="ptf"><input id="ptin" maxlength="' + (cur.type === 'cloud' ? 16 : 40) + '" placeholder="' + (cur.type === 'cloud' ? '輸入一個詞' : '輸入答案') + '" autocomplete="off"><button class="btn primary">送出</button></form>';
+    } else if (cur.type === 'order') {
+      if (P.orderQid !== st.qid) { P.orderQid = st.qid; P.order = opts.map((_, i) => i); }
+      body = '<div class="pord" id="pord"></div><button class="btn primary" id="pos" style="font-size:1.2rem;padding:.75rem">送出順序</button>';
+    }
+    return '<div class="pq-text">' + fmt(cur.text) + '</div>' + body;
+  }
+  if (st.phase === 'reveal') {
+    if (!TYPES[cur.type].scored) return center('<div class="pemo">💬</div><div class="pbig">謝謝你的回答！</div><div class="muted">看大螢幕看看大家的想法</div>');
+    const last = sc.last && sc.last.qid === st.qid ? sc.last : null;
+    let right = '';
+    const rv = cur.reveal || {};
+    if (rv.correct) right = toArr(rv.correct).map(i => optLabel(cur, i)).join('、');
+    if (rv.answers) right = toArr(rv.answers).join(' / ');
+    if (rv.order) right = toArr(rv.order).map(j => toArr(cur.options)[j]).join(' → ');
+    const rank = sc.rank ? '<div style="margin-top:.6rem">目前第 <b>' + sc.rank + '</b> 名</div>' : '';
+    if (last && last.ok) return center('<div class="pres-ok"><div class="pemo">🎉</div><div class="pbig">答對了！</div><div class="pts">+' + last.pts + '</div>' + (sc.streak > 1 ? '<div>連續答對 ' + sc.streak + ' 題 🔥</div>' : '') + rank + '</div>');
+    if (last && last.answered) return center('<div class="pres-bad"><div class="pemo">😵</div><div class="pbig">答錯了</div><div style="margin-top:.4rem">正確答案：' + esc(right) + '</div>' + rank + '</div>');
+    return center('<div class="pres-none"><div class="pemo">🙈</div><div class="pbig">沒有作答</div><div style="margin-top:.4rem">正確答案：' + esc(right) + '</div>' + rank + '</div>');
+  }
+  if (st.phase === 'board') return center('<div class="pemo">🏁</div><div class="pbig">第 ' + (sc.rank || '–') + ' 名</div><div>' + (sc.score || 0) + ' 分</div><div class="muted">看大螢幕的排行榜</div>');
+  if (st.phase === 'end') {
+    const r = sc.rank || 0; const emo = r === 1 ? '🏆' : r === 2 ? '🥈' : r === 3 ? '🥉' : '🙌';
+    return center('<div class="pemo">' + emo + '</div><div class="pbig">最終第 ' + (r || '–') + ' 名</div><div>' + (sc.score || 0) + ' 分</div><div class="muted">謝謝參與！</div>');
+  }
+  return center('');
+}
+function bindPlayer(P) {
+  const st = P.st;
+  const submit = v => {
+    if (P.sent === st.qid) return;
+    P.sent = st.qid; P.sentV = v; P.key = null; renderPlayer(P);
+    P.be.setOnce('games/' + P.pin + '/answers/' + st.qid + '/' + P.be.uid, { v, at: TS }).catch(e => {
+      if (P.sent === st.qid) { P.sent = null; P.key = null; renderPlayer(P); }
+      toast('送出失敗：' + (/PERMISSION/i.test(e.message) ? '作答時間已過' : e.message));
+    });
+  };
+  $$('.pbtn').forEach(b => b.onclick = () => submit(Number(b.dataset.v)));
+  const tf = $('#ptf');
+  if (tf) { $('#ptin').focus(); tf.onsubmit = e => { e.preventDefault(); const v = $('#ptin').value.trim(); if (v) submit(v); }; }
+  const po = $('#pord');
+  if (po) {
+    const opts = toArr(P.cur.options);
+    const draw = () => {
+      po.innerHTML = P.order.map((j, k) => '<div class="it"><span class="k">' + (k + 1) + '</span><span class="tx">' + esc(opts[j]) + '</span><button data-up="' + k + '"' + (k === 0 ? ' disabled' : '') + '>▲</button><button data-dn="' + k + '"' + (k === P.order.length - 1 ? ' disabled' : '') + '>▼</button></div>').join('');
+      $$('[data-up]', po).forEach(b => b.onclick = () => { const k = +b.dataset.up; [P.order[k - 1], P.order[k]] = [P.order[k], P.order[k - 1]]; draw(); });
+      $$('[data-dn]', po).forEach(b => b.onclick = () => { const k = +b.dataset.dn; [P.order[k + 1], P.order[k]] = [P.order[k], P.order[k + 1]]; draw(); });
+    };
+    draw();
+    $('#pos').onclick = () => submit(P.order.slice());
+  }
+}
+
+/* ================= 講師：題庫 ================= */
+async function viewLibrary() {
+  const list = Store.list();
+  const sess = HostSess.get();
+  const fmtDate = t => t ? new Date(t).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+  app('<div class="topbar"><a href="#/" class="logo" style="text-decoration:none">飛<b>答</b></a><span class="muted">講師題庫</span><span class="sp"></span>' + modeBadge() + '</div>' +
+    '<div class="lib">' +
+    (sess && sess.pin ? '<div class="resume"><b>有一場活動還開著</b><span>PIN ' + fmtPin(sess.pin) + ' · ' + esc(sess.quiz.title) + '</span><span class="sp"></span><a class="btn primary sm" href="#/game/' + sess.pin + '">回到主持畫面</a><button class="btn sm" id="closeold">關閉它</button></div>' : '') +
+    '<h1>我的題組</h1>' +
+    '<div class="lib-actions"><button class="btn primary" id="new">＋ 新增題組</button><button class="btn" id="impq">匯入 Excel / CSV 成新題組</button><button class="btn" id="impj">匯入題組備份 (.json)</button><button class="btn" id="tpl">下載題目範本</button><input type="file" id="fq" accept=".csv,.tsv,.txt,.xlsx,.xls,.ods" class="hidden"><input type="file" id="fj" accept=".json" class="hidden"></div>' +
+    (list.length ? '<div class="cards">' + list.map(q => {
+      const types = Array.from(new Set(q.questions.map(x => x.type))).map(t => '<span class="chip">' + TYPES[t].icon + ' ' + TYPES[t].name + '</span>').join('');
+      return '<div class="qcard"><h3>' + esc(q.title) + '</h3><div class="meta">' + q.questions.length + ' 題 · ' + fmtDate(q.updatedAt) + (q.pubId ? ' · 已放進簡報' : '') + '</div><div class="types">' + types + '</div>' +
+        '<div class="acts"><button class="btn primary sm" data-start="' + q.id + '">▶ 開始活動</button><a class="btn sm" href="#/edit/' + q.id + '">編輯</a><button class="btn sm" data-ppt="' + q.id + '">放進簡報</button><button class="btn sm ghost" data-exp="' + q.id + '">備份</button><button class="btn sm ghost danger" data-del="' + q.id + '">刪除</button></div></div>';
+    }).join('') + '</div>' : '<div class="empty">還沒有題組，按「新增題組」開始吧</div>') +
+    '</div>');
+  const be = await getBackend('host').catch(() => null);
+  if ($('#closeold')) $('#closeold').onclick = async () => { if (be) await closeGame(be, sess.pin); HostSess.clear(); viewLibrary(); };
+  $('#new').onclick = () => { const q = { id: rand(8), title: '新的題組', questions: [newQ('mc')] }; Store.put(q); location.hash = '#/edit/' + q.id; };
+  $('#tpl').onclick = () => download('飛答題目範本.csv', '﻿' + TEMPLATE_CSV, 'text/csv;charset=utf-8');
+  $('#impq').onclick = () => $('#fq').click();
+  $('#fq').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return; e.target.value = '';
+    try {
+      const res = rowsToQuestions(await readQuestionFile(f));
+      if (!res.questions.length) { alertBox('沒有讀到題目', res.errors.map(esc).join('<br>') || '檔案是空的'); return; }
+      const q = { id: rand(8), title: f.name.replace(/\.[^.]+$/, ''), questions: res.questions }; Store.put(q);
+      if (res.errors.length) toast('已匯入 ' + res.questions.length + ' 題，另有 ' + res.errors.length + ' 列無法讀取', 4000);
+      location.hash = '#/edit/' + q.id;
+    } catch (err) { alertBox('匯入失敗', esc(err.message)); }
+  };
+  $('#impj').onclick = () => $('#fj').click();
+  $('#fj').onchange = async e => {
+    const f = e.target.files[0]; if (!f) return; e.target.value = '';
+    try {
+      let data = JSON.parse(decodeText(await f.arrayBuffer()));
+      data = Array.isArray(data) ? data : [data];
+      data.forEach(d => { const q = normalizeQuiz(d); q.id = rand(8); delete q.pubId; Store.put(q); });
+      toast('已匯入 ' + data.length + ' 個題組'); viewLibrary();
+    } catch (err) { alertBox('匯入失敗', '這不是飛答的題組備份檔。'); }
+  };
+  $$('[data-start]').forEach(b => b.onclick = () => createGame(Store.get(b.dataset.start)));
+  $$('[data-ppt]').forEach(b => b.onclick = () => pptDialog(Store.get(b.dataset.ppt)));
+  $$('[data-exp]').forEach(b => b.onclick = () => { const q = Store.get(b.dataset.exp); const c = Object.assign({}, q); delete c.pubId; download(q.title + '.flyquiz.json', JSON.stringify(c, null, 2), 'application/json'); });
+  $$('[data-del]').forEach(b => b.onclick = async () => { const q = Store.get(b.dataset.del); if (await confirmBox('刪除題組', '確定要刪除「' + esc(q.title) + '」嗎？刪除後無法復原。', '刪除', true)) { Store.del(q.id); viewLibrary(); } });
+}
+
+/* ================= 講師：編輯題組 ================= */
+async function viewEditor(id) {
+  const quiz = Store.get(id);
+  if (!quiz) { location.hash = '#/host'; return; }
+  let sel = 0, saveT = null;
+  app('<div class="ed"><div class="topbar"><a class="btn ghost sm" href="#/host">← 題庫</a><input class="title-in" id="tt" maxlength="60"><span class="saved" id="sv"></span><span class="sp"></span>' +
+    '<button class="btn sm" id="imp">匯入題目</button><button class="btn sm" id="ppt">放進簡報</button><button class="btn primary" id="go">▶ 開始活動</button></div>' +
+    '<div class="ed-body"><div class="ed-list" id="el"></div><div class="ed-main" id="em"></div></div></div>');
+  $('#tt').value = quiz.title;
+  const save = () => { $('#sv').textContent = '儲存中…'; clearTimeout(saveT); saveT = setTimeout(() => { Store.put(quiz); syncPublished(quiz); $('#sv').textContent = '已儲存'; }, 300); };
+  onCleanup(() => { if (saveT) { clearTimeout(saveT); Store.put(quiz); syncPublished(quiz); } });
+  $('#tt').oninput = () => { quiz.title = $('#tt').value; save(); };
+  const drawList = () => {
+    $('#el').innerHTML = quiz.questions.map((q, i) => '<button class="ed-item' + (i === sel ? ' sel' : '') + (questionProblems(q).length ? ' bad' : '') + '" data-i="' + i + '"><span class="n">' + (i + 1) + '</span><span class="t">' + (esc(plain(q.text)) || '<span class="muted">（空白題目）</span>') + '</span><span class="ty">' + TYPES[q.type].icon + ' ' + TYPES[q.type].name + '</span></button>').join('') +
+      '<div class="hint" style="margin-top:.6rem">新增題目</div><div class="ed-add">' + Object.keys(TYPES).map(t => '<button class="btn" data-add="' + t + '">' + TYPES[t].icon + ' ' + TYPES[t].name + '</button>').join('') + '</div>';
+    $$('[data-i]', $('#el')).forEach(b => b.onclick = () => { sel = +b.dataset.i; drawList(); drawMain(); });
+    $$('[data-add]', $('#el')).forEach(b => b.onclick = () => { quiz.questions.splice(sel + 1, 0, newQ(b.dataset.add)); sel = Math.min(sel + 1, quiz.questions.length - 1); save(); drawList(); drawMain(); const t = $('#qt'); if (t) t.focus(); });
+  };
+  const refreshItem = () => {
+    const q = quiz.questions[sel]; const b = $('[data-i="' + sel + '"]'); if (!b) return;
+    $('.t', b).innerHTML = esc(plain(q.text)) || '<span class="muted">（空白題目）</span>';
+    b.classList.toggle('bad', questionProblems(q).length > 0);
+  };
+  const drawMain = () => {
+    const em = $('#em');
+    const q = quiz.questions[sel];
+    if (!q) { em.innerHTML = '<div class="empty">左邊選一種題型來新增題目</div>'; return; }
+    let opts = '';
+    if (q.type === 'mc' || q.type === 'poll') {
+      opts = '<div><span class="fl">選項' + (q.type === 'mc' ? '（勾選正確答案，可多個）' : '') + '</span>' +
+        q.options.map((o, i) => '<div class="optrow ' + OC[i] + '"><span class="lt">' + LT[i] + '</span><input class="in" data-o="' + i + '" maxlength="80" placeholder="選項 ' + LT[i] + '">' +
+          (q.type === 'mc' ? '<label class="ok' + (q.correct.includes(i) ? ' on' : '') + '" data-c="' + i + '">' + (q.correct.includes(i) ? '✓ 正確' : '正確') + '</label>' : '') +
+          (q.options.length > 2 ? '<button class="x" data-rm="' + i + '" title="刪除選項">✕</button>' : '') + '</div>').join('') +
+        (q.options.length < 6 ? '<button class="btn sm" id="addo">＋ 選項</button>' : '') + '</div>';
+    }
+    if (q.type === 'tf') opts = '<div><span class="fl">正確答案</span><div class="tfpick"><button data-tf="0" class="' + (q.correct[0] === 0 ? 'on' : '') + '">⭕ 對</button><button data-tf="1" class="' + (q.correct[0] === 1 ? 'on' : '') + '">❌ 錯</button></div></div>';
+    if (q.type === 'order') opts = '<div><span class="fl">項目（請照「正確順序」由上到下輸入，學生看到的會自動打亂）</span>' +
+      q.options.map((o, i) => '<div class="optrow"><span class="lt" style="--oc:var(--ink)">' + (i + 1) + '</span><input class="in" data-o="' + i + '" maxlength="60" placeholder="第 ' + (i + 1) + ' 個">' + (q.options.length > 2 ? '<button class="x" data-rm="' + i + '">✕</button>' : '') + '</div>').join('') +
+      (q.options.length < 6 ? '<button class="btn sm" id="addo">＋ 項目</button>' : '') + '</div>';
+    if (q.type === 'type') opts = '<div><span class="fl">可接受的答案</span><div class="hint" style="margin-bottom:.4rem">比對時會忽略大小寫、空白、全半形與標點。可以填多種寫法，例如「4」和「四」。</div>' +
+      q.answers.map((a, i) => '<div class="optrow"><input class="in" data-a="' + i + '" maxlength="40" placeholder="答案 ' + (i + 1) + '">' + (q.answers.length > 1 ? '<button class="x" data-rma="' + i + '">✕</button>' : '') + '</div>').join('') +
+      (q.answers.length < 8 ? '<button class="btn sm" id="adda">＋ 另一種寫法</button>' : '') + '</div>';
+    if (q.type === 'cloud') opts = '<div class="hint">學生各自輸入一個詞（最多 16 字），大螢幕會即時長出文字雲。不計分。</div>';
+    if (q.type === 'poll') opts += '<div class="hint">投票不計分，公布時會顯示每個選項的票數。</div>';
+    em.innerHTML = '<div class="inner">' +
+      '<div><span class="fl">題型</span><div class="seg">' + Object.keys(TYPES).map(t => '<button data-ty="' + t + '" class="' + (t === q.type ? 'on' : '') + '">' + TYPES[t].icon + ' ' + TYPES[t].name + '</button>').join('') + '</div></div>' +
+      '<div><span class="fl">題目</span><textarea class="in" id="qt" rows="4" maxlength="1200" placeholder="輸入題目。程式碼可以用 ``` 包起來，會以程式碼格式顯示。"></textarea></div>' +
+      opts +
+      '<div class="rowflex"><div><span class="fl">作答時間</span><select class="in" id="qtm" style="width:auto">' + TIMES.map(s => '<option value="' + s + '"' + (s === q.time ? ' selected' : '') + '>' + (s < 60 ? s + ' 秒' : (s / 60) + ' 分鐘') + '</option>').join('') + '</select></div>' +
+      (TYPES[q.type].scored ? '<label class="rowflex" style="gap:.4rem;margin-top:1.4rem;cursor:pointer"><input type="checkbox" id="qdb"' + (q.double ? ' checked' : '') + '> 雙倍分數</label>' : '') + '</div>' +
+      '<div class="rowflex"><button class="btn sm" id="mu">↑ 上移</button><button class="btn sm" id="md">↓ 下移</button><button class="btn sm" id="dup">複製這題</button><span class="sp" style="flex:1"></span><button class="btn sm danger" id="del">刪除這題</button></div>' +
+      '<div class="hint" id="prob"></div>' +
+      '</div>';
+    $('#qt').value = q.text;
+    $$('[data-o]', em).forEach(inp => { inp.value = q.options[+inp.dataset.o]; inp.oninput = () => { q.options[+inp.dataset.o] = inp.value; save(); refreshItem(); showProb(); }; });
+    $$('[data-a]', em).forEach(inp => { inp.value = q.answers[+inp.dataset.a]; inp.oninput = () => { q.answers[+inp.dataset.a] = inp.value; save(); refreshItem(); showProb(); }; });
+    $('#qt').oninput = () => { q.text = $('#qt').value; save(); refreshItem(); showProb(); };
+    $$('[data-ty]', em).forEach(b => b.onclick = () => { if (b.dataset.ty === q.type) return; quiz.questions[sel] = changeType(q, b.dataset.ty); save(); drawList(); drawMain(); });
+    $$('[data-c]', em).forEach(b => b.onclick = () => { const i = +b.dataset.c; q.correct = q.correct.includes(i) ? q.correct.filter(x => x !== i) : q.correct.concat(i).sort(); save(); drawMain(); refreshItem(); });
+    $$('[data-rm]', em).forEach(b => b.onclick = () => { const i = +b.dataset.rm; q.options.splice(i, 1); q.correct = q.correct.filter(x => x !== i).map(x => x > i ? x - 1 : x); save(); drawMain(); refreshItem(); });
+    $$('[data-rma]', em).forEach(b => b.onclick = () => { q.answers.splice(+b.dataset.rma, 1); save(); drawMain(); refreshItem(); });
+    $$('[data-tf]', em).forEach(b => b.onclick = () => { q.correct = [+b.dataset.tf]; save(); drawMain(); });
+    if ($('#addo')) $('#addo').onclick = () => { q.options.push(''); save(); drawMain(); const ins = $$('[data-o]'); ins[ins.length - 1].focus(); };
+    if ($('#adda')) $('#adda').onclick = () => { q.answers.push(''); save(); drawMain(); const ins = $$('[data-a]'); ins[ins.length - 1].focus(); };
+    $('#qtm').onchange = () => { q.time = +$('#qtm').value; save(); };
+    if ($('#qdb')) $('#qdb').onchange = () => { q.double = $('#qdb').checked; save(); };
+    $('#mu').onclick = () => { if (sel > 0) { const a = quiz.questions; [a[sel - 1], a[sel]] = [a[sel], a[sel - 1]]; sel--; save(); drawList(); drawMain(); } };
+    $('#md').onclick = () => { const a = quiz.questions; if (sel < a.length - 1) { [a[sel + 1], a[sel]] = [a[sel], a[sel + 1]]; sel++; save(); drawList(); drawMain(); } };
+    $('#dup').onclick = () => { const c = JSON.parse(JSON.stringify(q)); c.id = rand(6); quiz.questions.splice(sel + 1, 0, c); sel++; save(); drawList(); drawMain(); };
+    $('#del').onclick = () => { quiz.questions.splice(sel, 1); sel = Math.max(0, Math.min(sel, quiz.questions.length - 1)); save(); drawList(); drawMain(); };
+    showProb();
+  };
+  const showProb = () => { const q = quiz.questions[sel]; const p = $('#prob'); if (p && q) p.innerHTML = questionProblems(q).map(e => '<span style="color:var(--bad)">⚠ ' + esc(e) + '</span>').join('　'); };
+  drawList(); drawMain();
+  $('#go').onclick = () => { clearTimeout(saveT); saveT = null; Store.put(quiz); createGame(quiz); };
+  $('#ppt').onclick = () => { clearTimeout(saveT); saveT = null; Store.put(quiz); pptDialog(quiz); };
+  $('#imp').onclick = () => importDialog(qs => { quiz.questions = quiz.questions.filter(q => plain(q.text) || q.type !== 'mc' || q.options.some(Boolean)).concat(qs); sel = quiz.questions.length - qs.length; save(); drawList(); drawMain(); });
+}
+function importDialog(onAdd) {
+  const m = showModal('<h3>匯入題目</h3>' +
+    '<p class="hint" style="margin-top:0">欄位順序：<b>題型、題目、選項A、選項B、選項C、選項D、答案、秒數</b>。可直接從 Excel 複製貼上，或選擇 .xlsx / .csv 檔（Big5 編碼的 CSV 也能讀）。</p>' +
+    '<div class="rowflex" style="margin-bottom:.6rem"><button class="btn sm" id="ifile">選擇檔案…</button><button class="btn sm ghost" id="itpl">下載範本</button><input type="file" id="if" accept=".csv,.tsv,.txt,.xlsx,.xls,.ods" class="hidden"></div>' +
+    '<textarea class="in" id="ita" rows="7" placeholder="或在這裡貼上 Excel 的表格內容…"></textarea>' +
+    '<div id="ires" class="hint" style="margin-top:.6rem"></div>' +
+    '<div class="mfoot"><button class="btn" data-x>取消</button><button class="btn primary" id="iok" disabled>加入題目</button></div>');
+  let parsed = null;
+  const show = rows => {
+    parsed = rowsToQuestions(rows);
+    $('#ires', m).innerHTML = '讀到 <b>' + parsed.questions.length + '</b> 題' + (parsed.errors.length ? '<div style="color:var(--bad);margin-top:.3rem">' + parsed.errors.slice(0, 8).map(esc).join('<br>') + (parsed.errors.length > 8 ? '<br>…' : '') + '</div>' : '');
+    $('#iok', m).disabled = !parsed.questions.length;
+  };
+  $('[data-x]', m).onclick = closeModal;
+  $('#itpl', m).onclick = () => download('飛答題目範本.csv', '﻿' + TEMPLATE_CSV, 'text/csv;charset=utf-8');
+  $('#ifile', m).onclick = () => $('#if', m).click();
+  $('#if', m).onchange = async e => { const f = e.target.files[0]; if (!f) return; try { show(await readQuestionFile(f)); } catch (err) { $('#ires', m).textContent = '讀取失敗：' + err.message; } };
+  $('#ita', m).oninput = () => { const t = $('#ita', m).value; if (t.trim()) show(parseDelimited(t)); };
+  $('#iok', m).onclick = () => { if (parsed && parsed.questions.length) { onAdd(parsed.questions); closeModal(); toast('已加入 ' + parsed.questions.length + ' 題'); } };
+}
+
+/* ================= 放進 PowerPoint ================= */
+async function pptDialog(quiz) {
+  const errs = validateQuiz(quiz);
+  if (errs.length) { alertBox('題組還有地方沒完成', errs.slice(0, 10).map(esc).join('<br>')); return; }
+  let pubId;
+  try { pubId = await publishQuiz(quiz); }
+  catch (e) { alertBox('發布失敗', esc(e.message) + '<br><br>請確認 Firebase 設定與資料庫規則。'); return; }
+  const url = presentUrl(pubId);
+  const m = showModal('<h3>放進 PowerPoint</h3>' +
+    '<p style="margin:.2rem 0 .6rem">這個題組的固定網址如下。之後修改題目會自動同步，<b>簡報不用重做</b>。</p>' +
+    '<div class="copyrow"><input class="in" id="purl" readonly><button class="btn dark sm" id="pcopy">複製</button></div>' +
+    (CFG ? '' : '<p class="hint" style="color:#7a5600">目前是試玩模式，這個網址只能在這台電腦的這個瀏覽器使用。設定好 Firebase 並上線後，就能在任何電腦的 PowerPoint 使用。</p>') +
+    '<div class="tabs"><button data-tab="a" class="on">方法一：下載現成投影片（最簡單）</button><button data-tab="b">方法二：直接嵌入（2021 以後）</button></div>' +
+    '<div data-pane="a"><ol class="embed-steps">' +
+      '<li>按下面的按鈕下載一張投影片（.pptx）。</li>' +
+      '<li>打開它，把這張投影片<b>複製貼到你的簡報</b>裡想要互動的位置。</li>' +
+      '<li>放映時點 <b>▶ 開始互動</b>，會用瀏覽器全螢幕開啟；結束後按 <b>Alt+Tab</b> 切回簡報。所有 PowerPoint 版本都適用。</li>' +
+    '</ol><button class="btn primary" id="pdl">下載投影片 (.pptx)</button></div>' +
+    '<div data-pane="b" class="hidden"><ol class="embed-steps">' +
+      '<li>在 PowerPoint 按 <b>插入 → 增益集 → 取得增益集</b>，搜尋並加入 <b>Web Viewer</b>（只需做一次）。</li>' +
+      '<li>到要互動的投影片，按 <b>插入 → 我的增益集 → Web Viewer</b>。</li>' +
+      '<li>貼上上面的網址（Web Viewer 會自動補 https://，若重複請刪掉一個），按 Preview，再把框拉滿整張投影片。</li>' +
+      '<li>放映翻到這頁就是互動畫面，點「開啟房間」開始；翻到下一頁就繼續上課。</li>' +
+    '</ol><p class="hint">建議同一張投影片也放上方法一的 ▶ 按鈕：遇到舊版 PowerPoint 無法嵌入時，畫面會提示改點按鈕。嵌入時建議用手機遙控（主持畫面右上角的「📱 遙控」），因為放映中按鍵盤會被 PowerPoint 接走。</p></div>' +
+    '<div class="mfoot"><button class="btn" data-x>關閉</button><a class="btn" href="' + esc(url) + '" target="_blank" rel="noopener">在新分頁試開</a></div>');
+  $('#purl', m).value = url;
+  $('[data-x]', m).onclick = closeModal;
+  $('#pcopy', m).onclick = async () => { try { await navigator.clipboard.writeText(url); toast('已複製網址'); } catch (e) { $('#purl', m).select(); document.execCommand('copy'); toast('已複製網址'); } };
+  $$('[data-tab]', m).forEach(b => b.onclick = () => { $$('[data-tab]', m).forEach(x => x.classList.toggle('on', x === b)); $$('[data-pane]', m).forEach(p => p.classList.toggle('hidden', p.dataset.pane !== b.dataset.tab)); });
+  $('#pdl', m).onclick = async () => {
+    $('#pdl', m).disabled = true;
+    try { await buildPptx(quiz.title, url); } catch (e) { alertBox('產生投影片失敗', esc(e.message)); }
+    $('#pdl', m).disabled = false;
+  };
+}
+async function buildPptx(title, url) {
+  if (!window.PptxGenJS) await loadScript('lib/pptxgen.bundle.js');
+  const pptx = new PptxGenJS();
+  pptx.layout = 'LAYOUT_WIDE'; // 16:9，13.33 x 7.5 吋
+  const s = pptx.addSlide();
+  s.background = { color: '111A35' };
+  s.addText('課堂互動', { x: 0.8, y: 1.1, w: 11.7, h: 0.6, fontSize: 22, color: 'FF8A5C', bold: true, fontFace: 'Microsoft JhengHei' });
+  s.addText(title, { x: 0.8, y: 1.7, w: 11.7, h: 1.6, fontSize: 44, color: 'FFFFFF', bold: true, fontFace: 'Microsoft JhengHei', valign: 'top' });
+  s.addText([{ text: '▶  開始互動', options: { hyperlink: { url, tooltip: '用瀏覽器開啟互動畫面' } } }], {
+    shape: pptx.ShapeType.roundRect, rectRadius: 0.2, x: 0.8, y: 3.9, w: 4.6, h: 1.2,
+    fill: { color: 'FF6B35' }, color: 'FFFFFF', fontSize: 32, bold: true, align: 'center', valign: 'middle', fontFace: 'Microsoft JhengHei'
+  });
+  s.addText('放映時點按鈕，會用瀏覽器全螢幕開啟；結束後按 Alt+Tab 回到簡報。', { x: 0.8, y: 5.35, w: 11.7, h: 0.5, fontSize: 16, color: 'AEB6D0', fontFace: 'Microsoft JhengHei' });
+  s.addText('飛答 FlyQuiz', { x: 0.8, y: 6.6, w: 6, h: 0.4, fontSize: 12, color: '6B7189', fontFace: 'Microsoft JhengHei' });
+  s.addNotes('互動網址：' + url + '\n使用 PowerPoint 2021 以後的版本，也可以用「插入 → 我的增益集 → Web Viewer」把這個網址直接嵌入投影片。');
+  await pptx.writeFile({ fileName: '飛答-' + title.replace(/[\\/:*?"<>|]/g, '') + '.pptx' });
+}
+
+/* ================= 講師：開房間 ================= */
+async function closeGame(be, pin) {
+  try { await be.remove('secrets/' + pin); } catch (e) {}
+  try { await be.remove('games/' + pin); } catch (e) {}
+}
+async function createGame(quiz, pubId) {
+  if (!quiz) return;
+  const errs = validateQuiz(quiz);
+  if (errs.length) { alertBox('題組還有地方沒完成', errs.slice(0, 12).map(esc).join('<br>')); return; }
+  const be = await getBackend('host');
+  const q = cleanQuiz(quiz);
+  const old = HostSess.get();
+  if (old && old.pin) await closeGame(be, old.pin);
+  let lastErr = null;
+  for (let i = 0; i < 6; i++) {
+    const pin = String(100000 + Math.floor(Math.random() * 900000));
+    try {
+      if (await be.get('games/' + pin + '/state')) continue;
+      const token = rand(12);
+      await be.set('games/' + pin, { hostUid: be.uid, title: q.title || '未命名題組', createdAt: TS, state: { phase: 'lobby', total: q.questions.length } });
+      await be.set('secrets/' + pin, { remoteToken: token });
+      HostSess.save({ pin, quiz: q, perms: {}, token, pubId: pubId || null });
+      location.hash = '#/game/' + pin;
+      return;
+    } catch (e) { lastErr = e; }
+  }
+  alertBox('無法建立房間', esc(lastErr ? lastErr.message : '請再試一次') + '<br><br>如果剛設定 Firebase，請確認已開啟「匿名登入」並貼上資料庫規則。');
+}
+
+/* 投影片內嵌入口：#/present/{題組代碼} */
+async function viewPresent(pubId) {
+  document.body.className = 'stage';
+  app('<div class="host"><div class="hbar"><span class="logo">飛<b style="color:var(--accent)">答</b></span><span class="sp"></span>' + modeBadge() + '</div><div id="stage"><div class="present"><div class="sub">載入中…</div></div></div></div>');
+  const be = await getBackend('host');
+  const sess = HostSess.get();
+  if (sess && sess.pubId === pubId && sess.pin) {
+    const st = await be.get('games/' + sess.pin + '/state').catch(() => null);
+    if (st && st.phase !== 'end') { location.hash = '#/game/' + sess.pin; return; }
+  }
+  const quiz = await loadPublished(pubId);
+  if (!quiz) { $('#stage').innerHTML = '<div class="present"><h1>找不到這個題組</h1><div class="sub">網址可能有誤，或題組已被刪除。</div></div>'; return; }
+  const scored = quiz.questions.filter(q => TYPES[q.type].scored).length;
+  $('#stage').innerHTML = '<div class="present"><div class="sub">課堂互動</div><h1>' + esc(quiz.title) + '</h1><div class="sub">' + quiz.questions.length + ' 題' + (scored < quiz.questions.length ? '（' + scored + ' 題計分）' : '') + '</div><button class="sbtn go" id="open">開啟房間</button></div>';
+  $('#open').onclick = () => { $('#open').disabled = true; createGame(quiz, pubId).finally(() => { const b = $('#open'); if (b) b.disabled = false; }); };
+}
+
+/* ================= 講師：主持引擎 ================= */
+class Engine {
+  constructor(be, sess) { this.be = be; this.s = sess; this.pin = sess.pin; this.g = undefined; this.busy = false; this.done = new Set(); this.revealed = new Set(); this.knownRemotes = null; this.lastNext = 0; }
+  path(p) { return 'games/' + this.pin + (p ? '/' + p : ''); }
+  start(onChange, onTick) {
+    this.off = this.be.on(this.path(), g => {
+      this.g = g; if (g) { this.handleCommands(); this.watchRemotes(); }
+      onChange(); this.checkAuto();
+    });
+    this.iv = setInterval(() => { this.checkAuto(); onTick(); }, 200);
+  }
+  stop() { if (this.off) this.off(); clearInterval(this.iv); }
+  get st() { return (this.g && this.g.state) || { phase: 'lobby' }; }
+  get quiz() { return this.s.quiz; }
+  get perm() { return (this.s.perms || {})[this.st.qid]; }
+  q(i) { return this.quiz.questions[i == null ? this.st.qIndex : i]; }
+  players() { return (this.g && this.g.players) || {}; }
+  nPlayers() { return Object.keys(this.players()).length; }
+  answers() { const qid = this.st.qid; return (qid && this.g && this.g.answers && this.g.answers[qid]) || {}; }
+  nAnswered() { const p = this.players(); return Object.keys(this.answers()).filter(u => p[u]).length; }
+  now() { return this.be.now(); }
+  handleCommands() {
+    const cmds = this.g.commands || {};
+    Object.keys(cmds).forEach(id => {
+      if (this.done.has(id)) return; this.done.add(id);
+      const c = cmds[id]; this.be.remove(this.path('commands/' + id)).catch(() => {});
+      if (c.at && Math.abs(this.now() - c.at) > 60000) return;
+      if (c.c === 'next') this.next(true);
+      if (c.c === 'add10') this.addTime(10);
+      if (c.c === 'end') this.end();
+    });
+  }
+  watchRemotes() {
+    const ids = Object.keys(this.g.remotes || {});
+    if (this.knownRemotes === null) { this.knownRemotes = new Set(ids); return; }
+    const fresh = ids.filter(u => !this.knownRemotes.has(u));
+    ids.forEach(u => this.knownRemotes.add(u));
+    if (fresh.length) {
+      // 每次有遙控器連上就換一組新的配對碼，舊的 QR code 立刻失效，避免學生掃到
+      this.s.token = rand(12); HostSess.save(this.s);
+      this.be.set('secrets/' + this.pin + '/remoteToken', this.s.token).catch(() => {});
+      toast('📱 遙控器已連線'); if (this.onRemote) this.onRemote();
+    }
+  }
+  async act(fn) { if (this.busy) return; this.busy = true; try { await fn(); } catch (e) { console.error(e); toast('操作失敗：' + e.message); } finally { this.busy = false; } }
+  next(fromRemote) {
+    if (!fromRemote && Date.now() - this.lastNext < 500) return; this.lastNext = Date.now();
+    return this.act(async () => {
+      const st = this.st, N = this.quiz.questions.length;
+      if (st.phase === 'lobby') return this._start(0);
+      if (st.phase === 'question') return this._reveal();
+      if (st.phase === 'reveal' && TYPES[this.q().type].scored) return this.be.update(this.path('state'), { phase: 'board' });
+      if (st.phase === 'reveal' || st.phase === 'board') return st.qIndex + 1 < N ? this._start(st.qIndex + 1) : this.be.update(this.path('state'), { phase: 'end' });
+    });
+  }
+  reveal() { return this.act(() => this._reveal()); }
+  end() { return this.act(() => this.be.update(this.path('state'), { phase: 'end' })); }
+  addTime(sec) { if (this.st.phase === 'question') return this.be.update(this.path('state'), { endsAt: this.st.endsAt + sec * 1000 }); }
+  kick(uid) { return this.be.update(this.path(), { ['players/' + uid]: null, ['scores/' + uid]: null, ['kicked/' + uid]: true }); }
+  async _start(i) {
+    const q = this.q(i); const qid = 'q' + i + '_' + rand(4);
+    const pub = { qid, idx: i, total: this.quiz.questions.length, type: q.type, text: q.text, time: q.time, double: !!q.double };
+    if (['mc', 'tf', 'poll'].includes(q.type)) pub.options = q.options;
+    if (q.type === 'order') {
+      const perm = shuffle(q.options.map((_, k) => k));
+      if (perm.length > 1 && perm.every((v, k) => v === k)) perm.push(perm.shift());
+      this.s.perms = Object.assign({}, this.s.perms, { [qid]: perm }); HostSess.save(this.s);
+      pub.options = perm.map(j => q.options[j]);
+    }
+    const startedAt = this.now() + PREP_MS, endsAt = startedAt + q.time * 1000;
+    await this.be.update(this.path(), { state: { phase: 'question', qIndex: i, qid, startedAt, endsAt, total: pub.total }, current: pub });
+    this.be.set('secrets/' + this.pin + '/peek', { qid, text: answerText(q) }).catch(() => {});
+  }
+  async _reveal() {
+    const st = this.st; if (st.phase !== 'question' || this.revealed.has(st.qid)) return;
+    this.revealed.add(st.qid);
+    const q = this.q(), ans = this.answers(), players = this.players(), scores = (this.g && this.g.scores) || {}, perm = this.perm;
+    const upd = { 'state/phase': 'reveal', 'current/reveal': revealPayload(q, perm), 'current/stats': computeStats(q, ans, players, perm) };
+    if (TYPES[q.type].scored) {
+      const T = q.time * 1000; const next = {};
+      Object.keys(players).forEach(uid => {
+        const prev = scores[uid] || { score: 0, streak: 0 }; const a = ans[uid];
+        const ok = !!a && checkAnswer(q, a.v, perm);
+        const streak = ok ? (prev.streak || 0) + 1 : 0;
+        let pts = 0;
+        if (ok) { const t = Math.max(0, Math.min(T, (a.at || 0) - st.startedAt)); pts = Math.round(1000 * (1 - t / T / 2)) * (q.double ? 2 : 1) + Math.min(streak - 1, 5) * 100; }
+        next[uid] = { score: (prev.score || 0) + pts, streak, last: { qid: st.qid, ok, pts, answered: !!a }, prevRank: prev.rank || 0 };
+      });
+      Object.keys(next).sort((a, b) => next[b].score - next[a].score).forEach((uid, k) => { next[uid].rank = k + 1; upd['scores/' + uid] = next[uid]; });
+    }
+    await this.be.update(this.path(), upd);
+    Sound.chime();
+  }
+  checkAuto() {
+    const st = this.st; if (!this.g || st.phase !== 'question' || this.revealed.has(st.qid)) return;
+    const now = this.now();
+    if (now >= st.endsAt) return this.reveal();
+    const n = this.nPlayers();
+    if (n > 0 && now > st.startedAt && this.nAnswered() >= n) return this.reveal();
+  }
+  ranked() {
+    const p = this.players(), s = (this.g && this.g.scores) || {};
+    return Object.keys(p).map(uid => ({ uid, name: p[uid].name, score: (s[uid] && s[uid].score) || 0, last: s[uid] && s[uid].last, streak: (s[uid] && s[uid].streak) || 0 }))
+      .sort((a, b) => b.score - a.score || String(a.name).localeCompare(String(b.name)));
+  }
+}
+
+/* ================= 講師：投影畫面 ================= */
+async function viewGame(pin) {
+  const sess = HostSess.get();
+  document.body.className = 'stage';
+  if (!sess || sess.pin !== pin) {
+    app('<div class="host"><div class="present"><h1>找不到這場活動的主持資料</h1><div class="sub">主持畫面只能在建立活動的同一個瀏覽器開啟。</div><a class="sbtn" href="#/host" style="text-decoration:none;margin-top:1em">回到題庫</a></div></div>');
+    return;
+  }
+  const backTo = sess.pubId ? '#/present/' + sess.pubId : '#/host';
+  app('<div class="host"><div class="hbar"><span class="logo">飛<b style="color:var(--accent)">答</b></span><span class="title">' + esc(sess.quiz.title) + '</span><span class="sp"></span>' +
+    '<span class="pc">👥 <b id="hpc">0</b></span><span class="pinchip">PIN ' + fmtPin(pin) + '</span>' +
+    '<button class="hbtn" id="hrm" title="用手機當遙控器">📱 遙控</button><button class="hbtn" id="hmu" title="音效">' + (Sound.muted ? '🔇' : '🔊') + '</button>' +
+    (document.fullscreenEnabled ? '<button class="hbtn" id="hfs" title="全螢幕">⛶</button>' : '') +
+    '<button class="hbtn" id="hex" title="離開">✕</button></div>' +
+    '<div id="stage"></div><div class="hctl" id="hctl"></div></div>');
+  const be = await getBackend('host');
+  const eng = new Engine(be, sess);
+  let key = null, lastBeep = null;
+  const render = () => {
+    if (eng.g === null) { $('#stage').innerHTML = '<div class="present"><h1>這場活動已關閉</h1></div>'; $('#hctl').innerHTML = '<a class="sbtn go" href="' + backTo + '" style="text-decoration:none">回到開始畫面</a>'; return; }
+    if (eng.g === undefined) return;
+    const st = eng.st; const k = st.phase + '|' + (st.qid || '');
+    $('#hpc').textContent = eng.nPlayers();
+    if (k !== key) { key = k; renderStage(eng); renderCtl(eng); }
+    patchStage(eng);
+  };
+  const tick = () => {
+    const st = eng.st; if (st.phase !== 'question' || !eng.g) return;
+    const now = eng.now(); const qv = $('.qv'); if (!qv) return;
+    const prepping = now < st.startedAt;
+    qv.classList.toggle('prepping', prepping);
+    if (prepping) {
+      const left = st.startedAt - now; $('#prepn').textContent = Math.ceil(left / 1000);
+      $('.prep-bar i').style.width = (100 * (1 - left / PREP_MS)).toFixed(1) + '%';
+      return;
+    }
+    const left = Math.max(0, st.endsAt - now), total = st.endsAt - st.startedAt, sec = Math.ceil(left / 1000);
+    const num = $('#tnum'); if (num) num.textContent = sec;
+    const c = $('#tring'); if (c) c.style.strokeDashoffset = (283 * (1 - left / total)).toFixed(1);
+    if (sec <= 5 && sec > 0 && sec !== lastBeep) { lastBeep = sec; Sound.beep(sec === 1 ? 990 : 660, .07, .08); }
+  };
+  eng.onRemote = () => { if ($('.modal [data-remote]')) closeModal(); };
+  eng.start(render, tick);
+  const keyH = e => {
+    if (modalEl || /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
+    if (e.code === 'Space' || e.code === 'ArrowRight' || e.code === 'Enter' || e.code === 'PageDown') { e.preventDefault(); eng.next(); }
+  };
+  document.addEventListener('keydown', keyH);
+  onCleanup(() => { eng.stop(); document.removeEventListener('keydown', keyH); });
+  $('#hmu').onclick = () => { $('#hmu').textContent = Sound.toggle() ? '🔇' : '🔊'; };
+  if ($('#hfs')) $('#hfs').onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); };
+  $('#hex').onclick = () => {
+    const m = showModal('<h3>離開主持畫面</h3><p>要關閉這場活動嗎？關閉後學員會看到「活動已結束」。</p>' +
+      (sess.pubId ? '' : '<p class="hint">選「暫時離開」的話活動會保留，之後可以從題庫回來繼續。</p>') +
+      '<div class="mfoot"><button class="btn" data-x>取消</button>' + (sess.pubId ? '' : '<button class="btn" data-leave>暫時離開</button>') + '<button class="btn dark" data-close>關閉活動</button></div>');
+    $('[data-x]', m).onclick = closeModal;
+    if ($('[data-leave]', m)) $('[data-leave]', m).onclick = () => { closeModal(); location.hash = '#/host'; };
+    $('[data-close]', m).onclick = async () => { closeModal(); await closeGame(be, pin); HostSess.clear(); location.hash = backTo; };
+  };
+  $('#hrm').onclick = () => {
+    const url = baseUrl() + '#/remote/' + pin + '/' + eng.s.token;
+    const m = showModal('<div data-remote></div><h3>📱 用手機當遙控器</h3><p style="margin-top:0">用手機相機掃描，就能在教室任何地方切換題目、延長時間，還能偷看正確答案。</p>' +
+      '<div style="display:flex;gap:1rem;align-items:center;flex-wrap:wrap"><div style="width:180px">' + qrImg(url, 5).replace('<img', '<img style="width:100%;image-rendering:pixelated"') + '</div>' +
+      '<div style="flex:1;min-width:200px" class="hint">這個 QR code 只能用一次：連上後會自動換新，學生就算看到也無法使用。<br><br>也可以複製連結，用 LINE 傳給自己的手機。</div></div>' +
+      '<div class="copyrow" style="margin-top:.8rem"><input class="in" readonly id="rurl"><button class="btn dark sm" id="rcp">複製連結</button></div>' +
+      '<div class="mfoot"><button class="btn" data-x>關閉</button></div>');
+    $('#rurl', m).value = url;
+    $('[data-x]', m).onclick = closeModal;
+    $('#rcp', m).onclick = async () => { try { await navigator.clipboard.writeText(url); } catch (e) { $('#rurl', m).select(); document.execCommand('copy'); } toast('已複製遙控連結'); };
+  };
+  function renderCtl(eng) {
+    const st = eng.st, N = eng.quiz.questions.length;
+    let html = '<span class="tip">空白鍵 / → 下一步</span>';
+    if (st.phase === 'lobby') html += '<button class="sbtn go" data-a="next">開始 ▶</button>';
+    if (st.phase === 'question') html += '<button class="sbtn" data-a="add">+10 秒</button><button class="sbtn go" data-a="next">立即截止</button>';
+    if (st.phase === 'reveal') { const sc = TYPES[eng.q().type].scored; html += '<button class="sbtn go" data-a="next">' + (sc ? '看排行榜 ▶' : st.qIndex + 1 < N ? '下一題 ▶' : '看最終結果 ▶') + '</button>'; }
+    if (st.phase === 'board') html += '<button class="sbtn go" data-a="next">' + (st.qIndex + 1 < N ? '下一題 ▶' : '看最終結果 ▶') + '</button>';
+    if (st.phase === 'end') html += '<button class="sbtn" data-a="again">再玩一次</button><button class="sbtn go" data-a="close">關閉房間</button>';
+    $('#hctl').innerHTML = html;
+    $$('[data-a]', $('#hctl')).forEach(b => b.onclick = async () => {
+      const a = b.dataset.a;
+      if (a === 'next') eng.next();
+      if (a === 'add') eng.addTime(10);
+      if (a === 'again') createGame(eng.quiz, sess.pubId);
+      if (a === 'close') { await closeGame(be, pin); HostSess.clear(); location.hash = backTo; }
+    });
+  }
+}
+function renderStage(eng) {
+  const st = eng.st, stage = $('#stage'), pin = eng.pin;
+  if (st.phase === 'lobby') {
+    const joinUrl = baseUrl() + '#/join/' + pin;
+    const local = location.protocol === 'file:' || !CFG;
+    stage.innerHTML = '<div class="lobby"><div class="lobby-l">' +
+      '<div class="step">① 用手機或平板打開</div><div class="url">' + esc(local ? '（試玩模式）在這台電腦開新分頁' : niceUrl()) + '</div>' +
+      '<div class="step">② 輸入活動 PIN</div><div class="bigpin">' + fmtPin(pin) + '</div></div>' +
+      '<div class="qrbox">' + qrImg(joinUrl, 8) + '<div class="small">或掃描 QR code 直接加入</div></div></div>' +
+      '<div class="plist-wrap"><div class="plist-h"><b id="lpc">0</b> 位學員已加入<span style="opacity:.5;font-size:.8em">　點名字可以移出</span></div><div class="plist" id="plist"></div></div>';
+    return;
+  }
+  const q = eng.q(), cur = (eng.g && eng.g.current) || {};
+  const opts = toArr(cur.options);
+  const meta = '<div class="q-meta"><span>第 ' + (st.qIndex + 1) + ' / ' + eng.quiz.questions.length + ' 題</span><span>' + TYPES[q.type].icon + ' ' + TYPES[q.type].name + '</span>' + (q.double ? '<span class="x2">雙倍分數</span>' : '') + '</div>';
+  if (st.phase === 'question') {
+    let center = '';
+    if (['mc', 'tf', 'poll'].includes(q.type)) center = '';
+    else if (q.type === 'order') center = '<div class="ordlist" style="min-width:50%">' + opts.map((o, i) => '<div class="ord"><span class="k">?</span>' + esc(o) + '</div>').join('') + '</div>';
+    else if (q.type === 'cloud') center = '<div id="lcloud" style="width:100%"></div>';
+    else center = '<div class="hintbig">✎ 請在你的裝置上輸入答案</div>';
+    stage.innerHTML = '<div class="qv">' + meta + '<div class="q-text">' + fmt(q.text) + '</div>' +
+      '<div class="q-mid"><div class="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="8"/><circle id="tring" cx="50" cy="50" r="45" fill="none" stroke="#ff6b35" stroke-width="8" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="0"/></svg><span class="num" id="tnum">' + q.time + '</span></div>' +
+      '<div class="q-center">' + center + '</div><div class="acount"><b id="acount">0</b><span>/ <i id="apc">0</i> 已作答</span></div></div>' +
+      (['mc', 'tf', 'poll'].includes(q.type) ? '<div class="opts n' + opts.length + '">' + opts.map((o, i) => '<div class="opt ' + OC[i] + '"><span class="lt">' + LT[i] + '</span><span class="tx">' + esc(o) + '</span></div>').join('') + '</div>' : '') +
+      '<div class="prep"><div style="font-size:1.3em;opacity:.8">準備作答</div><div class="prep-n" id="prepn">3</div><div class="prep-bar"><i></i></div></div></div>';
+    return;
+  }
+  if (st.phase === 'reveal') {
+    const stats = cur.stats || {}, rv = cur.reveal || {}, n = stats.n || 0;
+    let body = '', summary = '';
+    if (['mc', 'tf', 'poll'].includes(q.type)) {
+      const counts = toArr(stats.counts), max = Math.max(1, Math.max.apply(null, counts.concat([0])));
+      const corr = toArr(rv.correct);
+      const isC = i => q.type === 'poll' || corr.includes(i);
+      body = '<div class="bars">' + opts.map((o, i) => '<div class="bar ' + OC[i] + (isC(i) ? '' : ' dim') + '"><div class="cnt">' + (counts[i] || 0) + '</div><div class="col" style="height:' + (85 * (counts[i] || 0) / max).toFixed(1) + '%"></div><div class="base">' + LT[i] + (q.type !== 'poll' && corr.includes(i) ? ' ✓' : '') + '</div></div>').join('') + '</div>';
+      body = '<div style="display:flex;flex-direction:column;gap:.8em;flex:1;min-height:0;justify-content:flex-end">' + body + '<div class="opts n' + opts.length + '">' + opts.map((o, i) => '<div class="opt ' + OC[i] + (isC(i) ? '' : ' dim') + '"><span class="lt">' + LT[i] + '</span><span class="tx">' + esc(o) + '</span>' + (q.type !== 'poll' && corr.includes(i) ? '<span class="mk">✓</span>' : '') + '</div>').join('') + '</div></div>';
+      if (q.type !== 'poll') summary = '<div class="summary">答對 <b>' + (stats.right || 0) + '</b> / ' + eng.nPlayers() + ' 人</div>';
+      else summary = '<div class="summary">共 ' + n + ' 票</div>';
+    } else if (q.type === 'type') {
+      body = '<div class="q-center" style="flex-direction:column;gap:.8em"><div class="summary">正確答案：<b>' + esc(toArr(rv.answers).join(' / ')) + '</b></div><div class="tlist">' +
+        toArr(stats.top).map(t => '<div class="trow' + (t.ok ? ' good' : '') + '"><span>' + esc(t.t) + '</span><span>' + t.n + ' 人</span></div>').join('') + '</div></div>';
+      summary = '<div class="summary">答對 <b>' + (stats.right || 0) + '</b> / ' + eng.nPlayers() + ' 人</div>';
+    } else if (q.type === 'order') {
+      const ord = toArr(rv.order);
+      body = '<div class="q-center"><div class="ordlist" style="min-width:50%">' + ord.map((j, k) => '<div class="ord good"><span class="k">' + (k + 1) + '</span>' + esc(opts[j]) + '</div>').join('') + '</div></div>';
+      summary = '<div class="summary">排對 <b>' + (stats.right || 0) + '</b> / ' + eng.nPlayers() + ' 人</div>';
+    } else if (q.type === 'cloud') {
+      body = '<div class="q-center">' + cloudHTML(toArr(stats.words)) + '</div>';
+      summary = '<div class="summary">共 ' + n + ' 人回答</div>';
+    }
+    stage.innerHTML = '<div class="qv">' + meta + '<div class="q-text" style="font-size:1.5em">' + fmt(q.text) + '</div>' + body + summary + '</div>';
+    return;
+  }
+  if (st.phase === 'board') {
+    const top = eng.ranked().slice(0, 5);
+    stage.innerHTML = '<div class="board"><h2>🏆 排行榜</h2>' + (top.length ? top.map((p, i) => '<div class="brow" style="animation-delay:' + (i * .12) + 's"><span class="rk">' + (i + 1) + '</span><span class="nm">' + esc(p.name) + (p.streak > 2 ? ' <span class="fire">🔥' + p.streak + '</span>' : '') + '</span><span class="dl">' + (p.last && p.last.pts ? '+' + p.last.pts : '') + '</span><span class="sc">' + p.score + '</span></div>').join('') : '<div class="hintbig">還沒有學員</div>') + '</div>';
+    return;
+  }
+  if (st.phase === 'end') {
+    const r = eng.ranked();
+    const pod = (p, cls, n) => p ? '<div class="pod ' + cls + '"><div class="nm">' + esc(p.name) + '</div><div class="sc">' + p.score + ' 分</div><div class="blk">' + n + '</div></div>' : '<div class="pod ' + cls + '"></div>';
+    stage.innerHTML = '<div class="podium">' + pod(r[1], 'p2', 2) + pod(r[0], 'p1', 1) + pod(r[2], 'p3', 3) + '</div>' +
+      (r.length > 3 ? '<div class="rest">' + r.slice(3, 15).map((p, i) => '<span class="chip" style="background:rgba(255,255,255,.12)">' + (i + 4) + '. ' + esc(p.name) + ' · ' + p.score + '</span>').join('') + '</div>' : '');
+    if (r.length) Sound.chime();
+  }
+}
+function patchStage(eng) {
+  const st = eng.st;
+  if (st.phase === 'lobby') {
+    const p = eng.players(), pl = $('#plist'); if (!pl) return;
+    const ids = Object.keys(p).sort((a, b) => (p[a].at || 0) - (p[b].at || 0));
+    $('#lpc').textContent = ids.length;
+    const sig = ids.join(',');
+    if (pl.dataset.sig === sig) return; pl.dataset.sig = sig;
+    pl.innerHTML = ids.map(u => '<button class="pchip" data-k="' + u + '" title="點一下移出">' + esc(p[u].name) + '</button>').join('');
+    $$('[data-k]', pl).forEach(b => b.onclick = async () => { if (await confirmBox('移出學員', '要把「' + esc(p[b.dataset.k].name) + '」移出這場活動嗎？', '移出', true)) eng.kick(b.dataset.k); });
+  }
+  if (st.phase === 'question') {
+    const a = $('#acount'); if (a) a.textContent = eng.nAnswered();
+    const pc = $('#apc'); if (pc) pc.textContent = eng.nPlayers();
+    const lc = $('#lcloud');
+    if (lc) { const s = computeStats(eng.q(), eng.answers(), eng.players()); lc.innerHTML = cloudHTML(s.words); }
+  }
+}
+
+/* ================= 遙控器 ================= */
+async function viewRemote(pin, token) {
+  document.body.className = 'remote';
+  app('<div class="rm"><div class="center-msg">連線中…</div></div>');
+  const be = await getBackend('host');
+  const mine = 'games/' + pin + '/remotes/' + be.uid;
+  let ok = !!(await be.get(mine).catch(() => null));
+  if (!ok) {
+    try {
+      if (be.mode === 'local' && (await be.get('secrets/' + pin + '/remoteToken')) !== token) throw new Error('bad');
+      await be.set(mine, token); ok = true;
+    } catch (e) { ok = false; }
+  }
+  if (!ok) { app('<div class="rm"><div class="center-msg"><div class="pemo">🔒</div><h2>遙控連結已失效</h2><p class="muted">每個遙控 QR code 只能用一次。請在主持畫面按「📱 遙控」重新掃描。</p></div></div>'); return; }
+  app('<div class="rm"><div class="rm-h"><span>📱 遙控器</span><span class="pinchip" style="font-size:.9rem">PIN ' + fmtPin(pin) + '</span></div>' +
+    '<div class="rm-card"><div class="rm-phase" id="rph"></div><div class="rm-q" id="rq"></div><div class="rm-text" id="rtx"></div></div>' +
+    '<div class="rm-stats"><div class="rm-card"><b id="rpl">0</b><span>學員</span></div><div class="rm-card"><b id="ran">–</b><span>已作答</span></div><div class="rm-card"><b id="rti">–</b><span>剩餘秒數</span></div></div>' +
+    '<div class="rm-peek hidden" id="rpk"><span>正確答案（只有你看得到）</span><b id="rpkt"></b></div>' +
+    '<button class="rm-main" id="rmain">…</button>' +
+    '<div class="rm-row"><button id="radd">+10 秒</button><button id="rlock">' + (('wakeLock' in navigator) ? '保持螢幕亮著' : '　') + '</button></div>' +
+    '<button class="rm-end" id="rend">結束活動</button></div>');
+  let g = null, peek = null;
+  const send = c => be.set('games/' + pin + '/commands/' + Date.now().toString(36) + rand(4), { c, at: TS }).catch(e => toast('送出失敗：' + e.message));
+  const draw = () => {
+    if (g === null) { $('#rph').textContent = '活動已關閉'; $('#rmain').disabled = true; return; }
+    if (!g) return;
+    const st = g.state || { phase: 'lobby' }, cur = g.current || {}, players = g.players || {};
+    const np = Object.keys(players).length;
+    const names = { lobby: '等待學員加入', question: '作答中', reveal: '公布答案', board: '排行榜', end: '活動結束' };
+    $('#rph').textContent = names[st.phase] || '';
+    $('#rpl').textContent = np;
+    const inQ = st.phase !== 'lobby' && cur.qid === st.qid;
+    $('#rq').textContent = inQ ? '第 ' + (cur.idx + 1) + ' / ' + cur.total + ' 題 · ' + TYPES[cur.type].name : (g.title || '');
+    $('#rtx').textContent = inQ ? plain(cur.text) : '';
+    const ans = (st.qid && g.answers && g.answers[st.qid]) || {};
+    $('#ran').textContent = st.phase === 'question' ? Object.keys(ans).filter(u => players[u]).length : '–';
+    const showPeek = peek && peek.qid === st.qid && (st.phase === 'question' || st.phase === 'reveal');
+    $('#rpk').classList.toggle('hidden', !showPeek); if (showPeek) $('#rpkt').textContent = peek.text;
+    const last = st.qIndex + 1 >= (st.total || 0);
+    const scored = cur.type && TYPES[cur.type].scored;
+    const label = { lobby: '▶ 開始', question: '立即截止', reveal: scored ? '看排行榜' : (last ? '看最終結果' : '下一題 ▶'), board: last ? '看最終結果' : '下一題 ▶', end: '已結束' }[st.phase];
+    $('#rmain').textContent = label; $('#rmain').disabled = st.phase === 'end';
+    $('#radd').disabled = st.phase !== 'question';
+  };
+  const tick = () => {
+    if (!g || !g.state || g.state.phase !== 'question') { $('#rti').textContent = '–'; return; }
+    $('#rti').textContent = Math.max(0, Math.ceil((g.state.endsAt - be.now()) / 1000));
+  };
+  const offs = [be.on('games/' + pin, v => { g = v; draw(); }), be.on('secrets/' + pin + '/peek', v => { peek = v; draw(); })];
+  const iv = setInterval(tick, 300);
+  let lock = null;
+  onCleanup(() => { offs.forEach(f => f()); clearInterval(iv); if (lock) lock.release().catch(() => {}); });
+  $('#rmain').onclick = () => { if (navigator.vibrate) navigator.vibrate(30); send('next'); };
+  $('#radd').onclick = () => send('add10');
+  $('#rend').onclick = async () => { if (await confirmBox('結束活動', '直接跳到最終結果？', '結束', true)) send('end'); };
+  $('#rlock').onclick = async () => { try { lock = await navigator.wakeLock.request('screen'); toast('螢幕會保持亮著'); } catch (e) {} };
+}
+
+window.addEventListener('hashchange', route);
+route();
+})();
+</script>
+</body>
+</html>
