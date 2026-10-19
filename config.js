@@ -1,16 +1,13 @@
-// 飛答 FlyQuiz — Firebase 設定
-// 1. 到 Firebase 主控台 → 專案設定 → 一般 → 你的應用程式（網頁）→ 複製 firebaseConfig
-// 2. 把下面的 null 換成那一段設定（記得要有 databaseURL）
-// 留著 null 就是「試玩模式」：只能在同一台電腦的瀏覽器分頁之間互動。
+// 飛答 FlyQuiz — Firebase 設定（專案：flyquiz-55a6d，帳號 greenmail101101@gmail.com）
+// 這段設定本來就是公開在網頁裡的；保護資料的是 Firebase 主控台裡的資料庫規則。
+// 改回 null 就會回到「試玩模式」。
 
-window.FEIDA_FIREBASE_CONFIG = null;
-
-/* 範例：
 window.FEIDA_FIREBASE_CONFIG = {
-  apiKey: "AIza....",
-  authDomain: "flyquiz-xxxx.firebaseapp.com",
-  databaseURL: "https://flyquiz-xxxx-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "flyquiz-xxxx",
-  appId: "1:1234567890:web:abcdef"
+  apiKey: "AIzaSyDpYWNBKvg9STEDHupALz0kQrotDY6McKs",
+  authDomain: "flyquiz-55a6d.firebaseapp.com",
+  databaseURL: "https://flyquiz-55a6d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "flyquiz-55a6d",
+  storageBucket: "flyquiz-55a6d.firebasestorage.app",
+  messagingSenderId: "592338168601",
+  appId: "1:592338168601:web:d65e1e35fedc729d9a3388"
 };
-*/
