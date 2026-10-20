@@ -23,8 +23,10 @@ a{color:inherit}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
 pre.code{font-family:var(--mono);background:#0d1430;color:#e9edff;border-radius:.6em;padding:.7em 1em;margin:.5em 0;text-align:left;white-space:pre;overflow:auto;font-size:.82em;line-height:1.45}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:.4em;border:1.5px solid var(--line);background:var(--card);border-radius:.7em;padding:.55em 1em;font-weight:600;text-decoration:none;transition:transform .08s,background .15s}
+.btn{color:var(--ink);display:inline-flex;align-items:center;justify-content:center;gap:.4em;border:1.5px solid var(--line);background:var(--card);border-radius:.7em;padding:.55em 1em;font-weight:600;text-decoration:none;transition:transform .08s,background .15s}
 .btn:hover{background:#faf8f3}
+body.player .btn:not(.primary):not(.dark){background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.3);color:#fff}
+body.player .btn:not(.primary):not(.dark):hover{background:rgba(255,255,255,.24)}
 .btn:active{transform:translateY(1px)}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
 .btn.primary:hover{background:var(--accent2)}
@@ -958,7 +960,7 @@ function playerHTML(P, key) {
   if (key.indexOf('pickteam|') === 0) {
     return center('<div class="pbig">選擇你的組別</div>' + (P.myT >= 0 ? '<div class="muted">目前在「' + esc(P.tc.names[P.myT]) + '」</div>' : '<div class="muted">點一下加入</div>') +
       '<div class="pteams">' + P.tc.names.map((n, i) => { const c = teamCounts(P.tc, P.all, P.be.uid)[i]; const full = c >= P.tc.cap && i !== P.myT;
-        return '<button class="pbtn ' + OC[i] + '" data-team="' + i + '"' + (full ? ' disabled' : '') + (i === P.myT ? ' style="outline:4px solid #fff;outline-offset:2px"' : '') + '><span>' + esc(n) + '</span><span class="cnt">' + (full ? '已滿' : c + ' / ' + P.tc.cap + ' 人') + '</span></button>'; }).join('') + '</div>' +
+        return '<button class="pbtn ' + OC[i] + '" data-team="' + i + '"' + (full ? ' disabled' : '') + (i === P.myT ? ' style="outline:4px solid #fff;outline-offset:2px"' : '') + '><span>' + esc(n) + '</span><span class="cnt">' + (full ? '已滿' : (c + (i === P.myT ? 1 : 0)) + ' / ' + P.tc.cap + ' 人') + '</span></button>'; }).join('') + '</div>' +
       (P.myT >= 0 ? '<button class="btn" data-keep>不換了</button>' : ''));
   }
   const sc = P.score || {};
