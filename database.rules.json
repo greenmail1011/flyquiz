@@ -63,6 +63,12 @@
         ".read": "auth != null && (root.child('games/' + $pin + '/hostUid').val() === auth.uid || root.child('games/' + $pin + '/remotes/' + auth.uid).exists())",
         ".write": "auth != null && root.child('games/' + $pin + '/hostUid').val() === auth.uid"
       }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
+      }
     }
   }
 }

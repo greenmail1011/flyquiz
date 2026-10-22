@@ -68,6 +68,7 @@ textarea.in{resize:vertical}
 .topbar{display:flex;align-items:center;gap:.8rem;padding:.8rem 1.2rem;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
 .topbar .logo{font-size:1.4rem}
 .topbar .sp{flex:1}
+.acct{font-size:.9rem;color:var(--muted);max-width:18em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .lib{max-width:1040px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
 .lib h1{font-size:1.5rem;margin:.2rem 0 1rem}
 .lib-actions{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem}
@@ -519,7 +520,27 @@ async function makeFirebase(role) {
   let first = true;
   db.ref('.info/connected').on('value', s => { if (s.val()) { first = false; setNet(true); } else if (!first) setNet(false); });
   return {
-    mode: 'firebase', uid: user.uid,
+    mode: 'firebase',
+    get uid() { return auth.currentUser ? auth.currentUser.uid : null; },
+    user() { const u = auth.currentUser; return u ? { uid: u.uid, isAnonymous: u.isAnonymous, email: u.email || '', name: u.displayName || '' } : null; },
+    async signInGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: 'select_account' });
+      const cur = auth.currentUser;
+      try {
+        // 第一次登入：把這台裝置原本的匿名身分升級成 Google 帳號，已放進簡報的題組仍可更新
+        if (cur && cur.isAnonymous) await cur.linkWithPopup(provider);
+        else await auth.signInWithPopup(provider);
+      } catch (e) {
+        if (e && (e.code === 'auth/credential-already-in-use' || e.code === 'auth/email-already-in-use')) {
+          const cred = e.credential || (firebase.auth.GoogleAuthProvider.credentialFromError && firebase.auth.GoogleAuthProvider.credentialFromError(e));
+          if (cred) { await auth.signInWithCredential(cred); return; }
+          await auth.signInWithPopup(provider); return;
+        }
+        throw e;
+      }
+    },
+    async signOutToAnon() { await auth.signOut(); await auth.signInAnonymously(); },
     now: () => Date.now() + offset,
     async get(p) { return (await db.ref(p).get()).val(); },
     set: (p, v) => db.ref(p).set(v),
@@ -535,6 +556,12 @@ function getBackend(role) {
   if (!CFG) { Backends.local = Backends.local || Promise.resolve(makeLocal()); return Backends.local; }
   if (!Backends[role]) Backends[role] = makeFirebase(role).catch(e => { delete Backends[role]; throw e; });
   return Backends[role];
+}
+function accountHTML() {
+  if (!CFG) return modeBadge();
+  const u = Account.user();
+  if (u && !u.isAnonymous) return '<span class="acct" title="題庫存在雲端，換裝置登入同一帳號就看得到">☁ ' + esc(u.email || u.name || '已登入') + '</span><button class="btn sm" id="signout">登出</button>';
+  return '<button class="btn primary sm" id="signin">用 Google 登入・同步題庫</button>';
 }
 const modeBadge = () => CFG ? '' : '<span class="demo-badge">試玩模式：尚未設定 Firebase，只能在這台電腦的分頁之間互動</span>';
 
@@ -611,19 +638,110 @@ function sampleQuiz() {
   q = newQ('mc'); q.text = '這段程式最後印出什麼？\n```python\nx = 3\nfor i in range(3):\n    x = x + i\nprint(x)\n```'; q.options = ['5', '6', '9', '3']; q.correct = [1]; q.time = 30; q.double = true; qs.push(q);
   q = newQ('poll'); q.text = '今天哪個部分最有趣？'; q.options = ['飛行練習', '分組比賽', '寫程式', '拆裝無人機']; qs.push(q);
   q = newQ('cloud'); q.text = '用一個詞形容今天的課'; qs.push(q);
-  return { id: rand(8), title: '範例：無人機足球小測驗', questions: qs, updatedAt: Date.now() };
+  return { id: rand(8), title: SAMPLE_TITLE, questions: qs, updatedAt: Date.now() };
 }
+const SAMPLE_TITLE = '範例：無人機足球小測驗';
 const Store = {
-  list() {
+  mode: 'local', uid: null, be: null, cache: null, off: null, subs: new Set(), _ready: null, _res: null,
+  localList() {
     let l = null; try { l = JSON.parse(localStorage.getItem('feida-quizzes')); } catch (e) {}
-    if (!Array.isArray(l)) { l = [sampleQuiz()]; this.save(l); }
+    if (!Array.isArray(l)) { l = [sampleQuiz()]; this.localSave(l); }
     return l.map(normalizeQuiz);
   },
-  save(l) { localStorage.setItem('feida-quizzes', JSON.stringify(l)); },
-  get(id) { return this.list().find(q => q.id === id); },
-  put(q) { const l = this.list(); q.updatedAt = Date.now(); const i = l.findIndex(x => x.id === q.id); if (i < 0) l.unshift(q); else l[i] = q; this.save(l); },
-  del(id) { this.save(this.list().filter(q => q.id !== id)); },
+  localSave(l) { localStorage.setItem('feida-quizzes', JSON.stringify(l)); },
+  attach(be, uid) {
+    if (this.mode === 'cloud' && this.uid === uid) return;
+    this.detach(true);
+    this.mode = 'cloud'; this.uid = uid; this.be = be; this.cache = null;
+    this._ready = new Promise(r => { this._res = r; });
+    this.off = be.on('users/' + uid + '/quizzes', v => {
+      this.cache = v ? Object.keys(v).map(k => normalizeQuiz(Object.assign({}, v[k], { id: k }))) : [];
+      if (this._res) { this._res(); this._res = null; }
+      this.emit();
+    });
+  },
+  detach(silent) {
+    if (this.off) this.off();
+    const was = this.mode;
+    this.off = null; this.mode = 'local'; this.uid = null; this.be = null; this.cache = null; this._ready = null; this._res = null;
+    if (was === 'cloud' && !silent) this.emit();
+  },
+  ready() { return this._ready || Promise.resolve(); },
+  emit() { this.subs.forEach(f => { try { f(); } catch (e) { console.error(e); } }); },
+  onChange(f) { this.subs.add(f); return () => this.subs.delete(f); },
+  list() {
+    if (this.mode === 'cloud') return (this.cache || []).slice().sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    return this.localList();
+  },
+  get(id) { const q = this.list().find(x => x.id === id); return q ? normalizeQuiz(JSON.parse(JSON.stringify(q))) : undefined; },
+  put(q, keepTime) {
+    if (!keepTime || !q.updatedAt) q.updatedAt = Date.now();
+    if (this.mode === 'cloud') {
+      const data = JSON.parse(JSON.stringify(q)); delete data.id;
+      const nq = normalizeQuiz(Object.assign({}, data, { id: q.id }));
+      const i = (this.cache || []).findIndex(x => x.id === q.id);
+      if (!this.cache) this.cache = [];
+      if (i < 0) this.cache.unshift(nq); else this.cache[i] = nq;
+      this.be.set('users/' + this.uid + '/quizzes/' + q.id, data).catch(e => toast('雲端儲存失敗：' + e.message, 5000));
+      this.markSynced(q.id);
+      return;
+    }
+    const l = this.localList(); const i = l.findIndex(x => x.id === q.id); if (i < 0) l.unshift(q); else l[i] = q; this.localSave(l);
+  },
+  del(id) {
+    if (this.mode === 'cloud') {
+      this.cache = (this.cache || []).filter(q => q.id !== id);
+      this.be.remove('users/' + this.uid + '/quizzes/' + id).catch(e => toast('刪除失敗：' + e.message));
+      return;
+    }
+    this.localSave(this.localList().filter(q => q.id !== id));
+  },
+  // 記錄已經上傳過的本機題組，之後在雲端刪掉也不會再被提示上傳
+  synced() { try { return new Set(JSON.parse(localStorage.getItem('feida-synced-' + this.uid)) || []); } catch (e) { return new Set(); } },
+  markSynced(id) { const s = this.synced(); if (s.has(id)) return; s.add(id); try { localStorage.setItem('feida-synced-' + this.uid, JSON.stringify(Array.from(s))); } catch (e) {} },
+  // 這台裝置上、雲端還沒有的題組（本機的原始資料一律保留，不會刪除）
+  localOnly() {
+    if (this.mode !== 'cloud') return [];
+    let l = []; try { l = JSON.parse(localStorage.getItem('feida-quizzes')) || []; } catch (e) {}
+    const ids = new Set((this.cache || []).map(q => q.id)); this.synced().forEach(id => ids.add(id));
+    return l.map(normalizeQuiz).filter(q => !ids.has(q.id) && !isUntouchedSample(q));
+  },
 };
+const Account = {
+  be: null, inited: null,
+  init() {
+    if (!CFG) return Promise.resolve();
+    if (!this.inited) this.inited = getBackend('host').then(be => { this.be = be; this.sync(); }).catch(e => { this.inited = null; throw e; });
+    return this.inited.then(() => Store.ready());
+  },
+  user() { return this.be && this.be.user ? this.be.user() : null; },
+  isGoogle() { const u = this.user(); return !!(u && !u.isAnonymous); },
+  sync() { const u = this.user(); if (u && !u.isAnonymous) Store.attach(this.be, u.uid); else Store.detach(); },
+  async signIn() { await this.be.signInGoogle(); this.sync(); await Store.ready(); },
+  async signOut() { await this.be.signOutToAnon(); this.sync(); },
+};
+function isUntouchedSample(q) { return q.title === SAMPLE_TITLE && q.questions.length === 7 && !q.pubId; }
+function migrateDialog(cands) {
+  const m = showModal('<h3>把這台裝置的題組上傳到雲端？</h3><p class="hint" style="margin-top:0">上傳後，用同一個 Google 帳號在任何電腦、手機登入都看得到、也能編輯。</p>' +
+    cands.map((q, i) => '<label class="rowflex" style="gap:.6rem;margin:.35rem 0;cursor:pointer;flex-wrap:nowrap"><input type="checkbox" data-mi="' + i + '"' + (isUntouchedSample(q) ? '' : ' checked') + '><span><b>' + esc(q.title) + '</b> <span class="hint">' + q.questions.length + ' 題</span></span></label>').join('') +
+    '<div class="mfoot"><button class="btn" data-x>之後再說</button><button class="btn primary" data-ok>上傳選取的題組</button></div>', { sticky: true });
+  const done = () => { try { localStorage.setItem('feida-mig-' + Store.uid, '1'); } catch (e) {} closeModal(); };
+  $('[data-x]', m).onclick = done;
+  $('[data-ok]', m).onclick = () => {
+    const sel = $$('[data-mi]', m).filter(c => c.checked).map(c => cands[+c.dataset.mi]);
+    done(); sel.forEach(q => Store.put(q, true));
+    toast(sel.length ? '已上傳 ' + sel.length + ' 個題組到雲端' : '沒有選取題組');
+    if (location.hash === '#/host') viewLibrary();
+  };
+}
+function authErrorText(e) {
+  const c = (e && e.code) || '';
+  if (c === 'auth/popup-blocked') return '登入視窗被擋住了，請允許這個網站彈出視窗後再試一次。';
+  if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request') return '';
+  if (c === 'auth/unauthorized-domain') return '這個網址還沒加入 Firebase 的「授權網域」。';
+  if (c === 'auth/operation-not-allowed') return 'Firebase 還沒開啟 Google 登入。';
+  return (e && e.message) || String(e);
+}
 const HostSess = {
   get() { try { return JSON.parse(localStorage.getItem('feida-host')); } catch (e) { return null; } },
   save(s) { localStorage.setItem('feida-host', JSON.stringify(s)); },
@@ -1048,12 +1166,20 @@ function bindPlayer(P) {
 
 /* ================= 講師：題庫 ================= */
 async function viewLibrary() {
+  if (CFG) {
+    app('<div class="center-msg"><div class="muted">載入題庫中…</div></div>');
+    try { await Account.init(); } catch (e) { toast('連線失敗：' + e.message); }
+  }
+  const unsub = Store.onChange(() => { if (location.hash === '#/host' && !modalEl) viewLibrary(); });
+  onCleanup(unsub);
   const list = Store.list();
   const sess = HostSess.get();
   const fmtDate = t => t ? new Date(t).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
-  app('<div class="topbar"><a href="#/" class="logo" style="text-decoration:none">飛<b>答</b></a><span class="muted">講師題庫</span><span class="sp"></span>' + modeBadge() + '</div>' +
+  app('<div class="topbar"><a href="#/" class="logo" style="text-decoration:none">飛<b>答</b></a><span class="muted">講師題庫</span><span class="sp"></span>' + accountHTML() + '</div>' +
     '<div class="lib">' +
     (sess && sess.pin ? '<div class="resume"><b>有一場活動還開著</b><span>PIN ' + fmtPin(sess.pin) + ' · ' + esc(sess.quiz.title) + '</span><span class="sp"></span><a class="btn primary sm" href="#/game/' + sess.pin + '">回到主持畫面</a><button class="btn sm" id="closeold">關閉它</button></div>' : '') +
+    (Store.mode === 'cloud' && Store.localOnly().length ? '<div class="resume" style="background:#eef4ff;border-color:#b9cdf5"><span>這台裝置上還有 <b>' + Store.localOnly().length + '</b> 個題組沒有上傳到雲端</span><span class="sp"></span><button class="btn sm primary" id="migr">選擇並上傳</button></div>' : '') +
+    (CFG && !Account.isGoogle() ? '<div class="resume" style="background:#eef4ff;border-color:#b9cdf5"><span>題組目前<b>只存在這台裝置</b>。用 Google 登入後，換電腦、手機也看得到同一份題庫。</span><span class="sp"></span><button class="btn sm primary" id="signin2">用 Google 登入</button></div>' : '') +
     '<h1>我的題組</h1>' +
     '<div class="lib-actions"><button class="btn primary" id="new">＋ 新增題組</button><button class="btn" id="impq">匯入 Excel / CSV 成新題組</button><button class="btn" id="impj">匯入題組備份 (.json)</button><button class="btn" id="tpl">下載題目範本</button><input type="file" id="fq" accept=".csv,.tsv,.txt,.xlsx,.xls,.ods" class="hidden"><input type="file" id="fj" accept=".json" class="hidden"></div>' +
     (list.length ? '<div class="cards">' + list.map(q => {
@@ -1063,6 +1189,23 @@ async function viewLibrary() {
     }).join('') + '</div>' : '<div class="empty">還沒有題組，按「新增題組」開始吧</div>') +
     '</div>');
   const be = await getBackend('host').catch(() => null);
+  const doSignIn = async () => {
+    try {
+      await Account.signIn();
+      const c = Store.localOnly();
+      viewLibrary();
+      if (c.length && !localStorage.getItem('feida-mig-' + Store.uid)) setTimeout(() => migrateDialog(c), 300);
+      else toast('已登入，題庫會自動同步');
+    } catch (e) { const t = authErrorText(e); if (t) alertBox('登入失敗', esc(t)); }
+  };
+  if ($('#signin')) $('#signin').onclick = doSignIn;
+  if ($('#signin2')) $('#signin2').onclick = doSignIn;
+  if ($('#signout')) $('#signout').onclick = async () => {
+    if (!(await confirmBox('登出', '登出後，這台裝置只會顯示存在本機的題組。雲端題庫不會被刪除，重新登入就會回來。', '登出'))) return;
+    await Account.signOut(); viewLibrary();
+  };
+  if ($('#migr')) $('#migr').onclick = () => migrateDialog(Store.localOnly());
+  if (Store.mode === 'cloud') { const c = Store.localOnly(); if (c.length && !localStorage.getItem('feida-mig-' + Store.uid)) setTimeout(() => { if (!modalEl && location.hash === '#/host') migrateDialog(c); }, 300); }
   if ($('#closeold')) $('#closeold').onclick = async () => { if (be) await closeGame(be, sess.pin); HostSess.clear(); viewLibrary(); };
   $('#new').onclick = () => { const q = { id: rand(8), title: '新的題組', questions: [newQ('mc')] }; Store.put(q); location.hash = '#/edit/' + q.id; };
   $('#tpl').onclick = () => download('飛答題目範本.csv', '﻿' + TEMPLATE_CSV, 'text/csv;charset=utf-8');
@@ -1095,6 +1238,7 @@ async function viewLibrary() {
 
 /* ================= 講師：編輯題組 ================= */
 async function viewEditor(id) {
+  if (CFG) { try { await Account.init(); } catch (e) {} }
   const quiz = Store.get(id);
   if (!quiz) { location.hash = '#/host'; return; }
   let sel = 0, saveT = null;
